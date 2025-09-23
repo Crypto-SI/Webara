@@ -20,13 +20,13 @@ import { Sparkles, Phone, XCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 export default function QuoteDetailPage({ params }: { params: { id: string } }) {
-  const id = params.id;
   const [quote, setQuote] = useState<MyQuote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
+    const id = params.id;
     async function fetchQuote() {
       if (!id) return;
       setIsLoading(true);
@@ -40,11 +40,11 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
     }
 
     fetchQuote();
-  }, [id]);
+  }, [params.id]);
 
   const handleRequestCall = () => {
     // In a real app, this would trigger a backend process
-    console.log("Requesting a call for quote:", id);
+    console.log("Requesting a call for quote:", params.id);
     toast({
       title: "Call Requested",
       description: "Our team will be in touch with you shortly!",
@@ -53,7 +53,7 @@ export default function QuoteDetailPage({ params }: { params: { id: string } }) 
 
   const handleRejectOffer = () => {
     // In a real app, this would update the quote status in the database
-    console.log("Offer rejected for quote:", id);
+    console.log("Offer rejected for quote:", params.id);
     toast({
       title: "Offer Status Updated",
       description: "Thank you for your feedback. The offer has been marked as rejected.",
