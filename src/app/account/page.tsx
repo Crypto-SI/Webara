@@ -25,7 +25,7 @@ const statusIcons: { [key in QuoteStatus]: React.ElementType } = {
   Pending: Clock,
   Accepted: CheckCircle,
   Rejected: XCircle,
-  Call Requested: PhoneOutgoing,
+  'Call Requested': PhoneOutgoing,
 };
 
 const statusColors: { [key in QuoteStatus]: string } = {
