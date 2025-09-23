@@ -12,14 +12,14 @@ export function Footer() {
           </p>
           <div className="flex gap-4">
             <Link
-              href="#"
+              href="/privacy-policy"
               className="text-sm text-foreground/70 hover:text-foreground"
               prefetch={false}
             >
               Privacy Policy
             </Link>
             <Link
-              href="#"
+              href="/terms-of-service"
               className="text-sm text-foreground/70 hover:text-foreground"
               prefetch={false}
             >
