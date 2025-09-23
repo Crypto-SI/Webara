@@ -3,3 +3,4 @@ config();
 
 import '@/ai/flows/provide-ai-powered-quote.ts';
 import '@/ai/flows/generate-collaboration-suggestions.ts';
+import '@/ai/flows/generate-tts.ts';

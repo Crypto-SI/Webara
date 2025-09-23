@@ -8,6 +8,7 @@ import {
   generateCollaborationSuggestions,
   type CollaborationSuggestionsOutput,
 } from '@/ai/flows/generate-collaboration-suggestions';
+import { generateTts, type TtsOutput } from '@/ai/flows/generate-tts';
 import { QuoteFormSchema, type QuoteFormValues } from '@/lib/types';
 
 export type AiQuoteAndSuggestions = QuoteOutput &
@@ -53,6 +54,26 @@ export async function getAiQuoteAction(
       data: null,
       error:
         'Failed to generate AI quote and suggestions. Please try again later.',
+    };
+  }
+}
+
+export async function getTtsAction(
+  text: string
+): Promise<{ success: boolean; data: TtsOutput | null; error: string | null }> {
+  if (!text) {
+    return { success: false, data: null, error: 'No text provided.' };
+  }
+
+  try {
+    const ttsResult = await generateTts(text);
+    return { success: true, data: ttsResult, error: null };
+  } catch (error) {
+    console.error('TTS generation failed:', error);
+    return {
+      success: false,
+      data: null,
+      error: 'Failed to generate audio. Please try again later.',
     };
   }
 }

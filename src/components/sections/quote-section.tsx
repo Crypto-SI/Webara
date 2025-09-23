@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { QuoteFormSchema, type QuoteFormValues } from '@/lib/types';
@@ -15,7 +15,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { getAiQuoteAction, type AiQuoteAndSuggestions } from '@/app/actions';
+import {
+  getAiQuoteAction,
+  getTtsAction,
+  type AiQuoteAndSuggestions,
+} from '@/app/actions';
 import {
   Card,
   CardContent,
@@ -23,7 +27,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card';
-import { Loader2, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles, Volume2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +43,8 @@ export function QuoteSection() {
   const [result, setResult] = useState<AiQuoteAndSuggestions | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isTtsLoading, setIsTtsLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(QuoteFormSchema),
@@ -68,8 +74,31 @@ export function QuoteSection() {
     setIsLoading(false);
   }
 
+  async function handlePlayTts() {
+    if (!result?.quote) return;
+    if (audioRef.current?.src) {
+      audioRef.current.play();
+      return;
+    }
+
+    setIsTtsLoading(true);
+    const response = await getTtsAction(result.quote);
+    setIsTtsLoading(false);
+
+    if (response.success && response.data) {
+      if (audioRef.current) {
+        audioRef.current.src = response.data.media;
+        audioRef.current.play();
+      }
+    } else {
+      // You could show a toast or error message here
+      console.error(response.error);
+    }
+  }
+
   return (
     <>
+      <audio ref={audioRef} className="hidden" />
       <section id="contact" className="w-full py-20 md:py-28 lg:py-32 bg-card">
         <div className="container mx-auto max-w-7xl px-4 md:px-6">
           <Card className="mx-auto max-w-3xl">
@@ -210,7 +239,22 @@ export function QuoteSection() {
               </AlertDialogHeader>
               <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
                 <div>
-                  <h4 className="mb-2 font-semibold">Estimated Quote</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold">Estimated Quote</h4>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handlePlayTts}
+                      disabled={isTtsLoading}
+                      aria-label="Listen to quote"
+                    >
+                      {isTtsLoading ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        <Volume2 />
+                      )}
+                    </Button>
+                  </div>
                   <p className="whitespace-pre-wrap text-sm text-foreground/80">
                     {result.quote}
                   </p>
