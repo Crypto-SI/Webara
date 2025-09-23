@@ -14,6 +14,8 @@ import { QuoteFormSchema, type QuoteFormValues } from '@/lib/types';
 export type AiQuoteAndSuggestions = QuoteOutput &
   CollaborationSuggestionsOutput;
   
+export type QuoteStatus = 'Pending' | 'Accepted' | 'Rejected' | 'Call Requested';
+
 export type MyQuote = {
   id: string;
   title: string;
@@ -21,6 +23,7 @@ export type MyQuote = {
   quote: string;
   suggestedCollaboration: string;
   suggestions: string[];
+  status: QuoteStatus;
 };
 
 
@@ -115,6 +118,7 @@ export async function getMyQuotesAction(): Promise<{
         'Implement a customer loyalty program with exclusive discounts.',
         'Partner with influencers for social media marketing campaigns.',
       ],
+      status: 'Accepted'
     },
     {
       id: 'quote-2',
@@ -129,6 +133,7 @@ export async function getMyQuotesAction(): Promise<{
         'Sell prints directly from your website.',
         'Offer online workshops or tutorials.',
       ],
+      status: 'Pending'
     },
     {
       id: 'quote-3',
@@ -143,6 +148,20 @@ export async function getMyQuotesAction(): Promise<{
         'Feature a "chef\'s special" of the day from partner restaurants.',
         'Allow users to create and share custom food collections.',
       ],
+      status: 'Rejected'
+    },
+     {
+      id: 'quote-4',
+      title: 'Corporate Website Redesign',
+      summary: 'Quote for corporate website redesign: $8,000. Collaboration: Fixed price.',
+      quote: 'A complete redesign of your corporate website is estimated at $8,000. This includes a modern UI/UX, mobile optimization, and a content management system.',
+      suggestedCollaboration: 'A fixed-price engagement is recommended to ensure budget and timeline adherence.',
+      suggestions: [
+        'Add an interactive timeline of the company\'s history.',
+        'Create a dedicated careers portal with an online application system.',
+        'Develop a resource center with case studies and whitepapers.',
+      ],
+      status: 'Call Requested',
     },
   ];
 
