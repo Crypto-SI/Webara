@@ -42,6 +42,9 @@ export async function getAiQuoteAction(
       }),
     ]);
 
+    // Here you would typically save the quote to your database
+    // For now, we'll just return it to the client.
+
     return {
       success: true,
       data: { ...aiQuote, ...aiSuggestions },
@@ -76,4 +79,27 @@ export async function getTtsAction(
       error: 'Failed to generate audio. Please try again later.',
     };
   }
+}
+
+export async function getMyQuotesAction(): Promise<{
+  success: boolean;
+  data: string[] | null;
+  error: string | null;
+}> {
+  // This is a placeholder. In a real application, you would fetch
+  // the user's quotes from your Supabase database.
+  // This requires user authentication, which is not implemented here.
+
+  // For demonstration purposes, we'll return some mock data.
+  const mockQuotes = [
+    "Quote for e-commerce site: $10,000. Suggested collaboration: 10% revenue share.",
+    "Quote for portfolio site: $2,500. Suggested collaboration: Fixed price.",
+    "Quote for mobile app design: $15,000. Suggested collaboration: Price per lead.",
+  ];
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ success: true, data: mockQuotes, error: null });
+    }, 1000);
+  });
 }

@@ -11,9 +11,10 @@ export function Header() {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const navLinks = [
-    { href: '#portfolio', label: 'Portfolio' },
-    { href: '#about', label: 'About' },
-    { href: '#contact', label: 'Contact' },
+    { href: '/#portfolio', label: 'Portfolio' },
+    { href: '/#about', label: 'About' },
+    { href: '/#contact', label: 'Contact' },
+    { href: '/account', label: 'My Account'},
   ];
 
   const handleScroll = (
@@ -21,9 +22,24 @@ export function Header() {
     href: string
   ) => {
     e.preventDefault();
-    document.querySelector(href)?.scrollIntoView({ behavior: 'smooth' });
+    if (href.startsWith('/#')) {
+        document.querySelector(href.substring(1))?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+        window.location.href = href;
+    }
     setIsOpen(false);
   };
+  
+  const handleNav = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
+    if (href.startsWith('/#')) {
+        e.preventDefault();
+        document.querySelector(href.substring(1))?.scrollIntoView({ behavior: 'smooth' });
+        setIsOpen(false);
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -34,7 +50,7 @@ export function Header() {
             <Link
               key={link.href}
               href={link.href}
-              onClick={(e) => handleScroll(e, link.href)}
+              onClick={(e) => handleNav(e, link.href)}
               className="relative text-sm font-medium text-foreground/70 transition-colors hover:text-foreground after:content-[''] after:absolute after:left-1/2 after:bottom-[-2px] after:h-[1.5px] after:w-0 after:bg-primary after:transition-all after:duration-300 after:-translate-x-1/2 hover:after:w-full"
               prefetch={false}
             >
@@ -43,8 +59,11 @@ export function Header() {
           ))}
         </nav>
         <div className="hidden md:flex items-center gap-4">
-          <Link href="#contact" onClick={(e) => handleScroll(e, '#contact')}>
-            <Button>Get a Quote</Button>
+          <Link href="/login">
+            <Button variant="ghost">Login</Button>
+          </Link>
+          <Link href="/signup">
+            <Button>Sign Up</Button>
           </Link>
         </div>
         <div className="md:hidden">
@@ -71,12 +90,14 @@ export function Header() {
                     </Link>
                   ))}
                 </nav>
-                <Link
-                  href="#contact"
-                  onClick={(e) => handleScroll(e, '#contact')}
-                >
-                  <Button className="w-full">Get a Quote</Button>
-                </Link>
+                <div className="flex flex-col gap-2">
+                    <Link href="/login">
+                        <Button variant="outline" className="w-full">Login</Button>
+                    </Link>
+                    <Link href="/signup">
+                        <Button className="w-full">Sign Up</Button>
+                    </Link>
+                </div>
               </div>
             </SheetContent>
           </Sheet>
