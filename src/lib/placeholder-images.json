@@ -35,6 +35,24 @@
       "description": "Abstract digital art representing technology",
       "imageUrl": "https://images.unsplash.com/photo-1634986666676-ec8fd927c23d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkaWdpdGFsJTIwYXJ0fGVufDB8fHx8MTc1ODU4NTA2N3ww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "digital art"
+    },
+    {
+      "id": "testimonial-sarah",
+      "description": "Portrait of Sarah Johnson",
+      "imageUrl": "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwcm9mZXNzaW9uYWwlMjB3b21hbnxlbnwwfHx8fDE3NTg1ODY0NjB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "professional woman"
+    },
+    {
+      "id": "testimonial-michael",
+      "description": "Portrait of Michael Thompson",
+      "imageUrl": "https://images.unsplash.com/photo-1654097115079-5747760e96e0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxjcmVhdGl2ZSUyMG1hbnxlbnwwfHx8fDE3NTg2MjgyNDh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "creative man"
+    },
+    {
+      "id": "testimonial-emily",
+      "description": "Portrait of Emily Rodriguez",
+      "imageUrl": "https://images.unsplash.com/photo-1590650516494-0c8e4a4dd67e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxidXNpbmVzcyUyMHByb2Zlc3Npb25hbHxlbnwwfHx8fDE3NTg2MTAyNDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "business professional"
     }
   ]
 }
