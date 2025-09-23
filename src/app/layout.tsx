@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'WebaraAI',
+  title: 'Webara Studio',
   description: 'We build digital experiences.',
 };
 

@@ -44,7 +44,7 @@ export function HeroSection() {
         </div>
         <div className="group flex items-center justify-center">
           {heroImage && (
-            <div className="relative w-full max-w-lg overflow-hidden rounded-lg shadow-2xl transition-transform duration-300 group-hover:rotate-0 lg:rotate-3">
+            <div className="relative w-full max-w-lg overflow-hidden rounded-lg shadow-2xl transition-transform duration-300 group-hover:rotate-0 lg:-rotate-3">
               <Image
                 src={heroImage.imageUrl}
                 alt={heroImage.description}

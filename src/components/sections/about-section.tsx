@@ -31,7 +31,7 @@ export function AboutSection() {
                 Crafting Digital Excellence
               </h2>
               <p className="max-w-prose text-foreground/80">
-                WebaraAI is a passionate team of designers, developers, and
+                Webara Studio is a passionate team of designers, developers, and
                 strategists dedicated to creating impactful digital experiences.
                 We believe in the power of collaboration and innovation to bring
                 your vision to life.

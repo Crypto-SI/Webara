@@ -8,7 +8,7 @@ export function Footer() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <Logo />
           <p className="text-sm text-foreground/70 text-center md:text-left">
-            © {new Date().getFullYear()} WebaraAI. All rights reserved.
+            © {new Date().getFullYear()} Webara Studio. All rights reserved.
           </p>
           <div className="flex gap-4">
             <Link
