@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { getAiQuoteAction } from '@/app/actions';
+import { getAiQuoteAction, type AiQuoteAndSuggestions } from '@/app/actions';
 import {
   Card,
   CardContent,
@@ -33,11 +33,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { QuoteOutput } from '@/ai/flows/provide-ai-powered-quote';
 
 export function QuoteSection() {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<QuoteOutput | null>(null);
+  const [result, setResult] = useState<AiQuoteAndSuggestions | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -184,7 +183,7 @@ export function QuoteSection() {
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-4 w-4" />
-                        Generate AI Quote
+                        Generate AI Quote & Suggestions
                       </>
                     )}
                   </Button>
@@ -224,6 +223,18 @@ export function QuoteSection() {
                     {result.suggestedCollaboration}
                   </p>
                 </div>
+                {result.suggestions && result.suggestions.length > 0 && (
+                  <div>
+                    <h4 className="mb-2 font-semibold">
+                      Creative Collaboration Ideas
+                    </h4>
+                    <ul className="list-disc pl-5 space-y-2 text-sm text-foreground/80">
+                      {result.suggestions.map((suggestion, index) => (
+                        <li key={index}>{suggestion}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </>
           ) : (
