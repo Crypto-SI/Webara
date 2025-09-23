@@ -1,6 +1,8 @@
+// src/app/layout.tsx
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import { AnimationProvider } from '@/context/animation-context';
 
 export const metadata: Metadata = {
   title: 'Webara Studio',
@@ -16,14 +18,20 @@ export default function RootLayout({
     <html lang="en" className="!scroll-smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         <link
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
       </head>
       <body className="font-body antialiased">
-        {children}
+        <AnimationProvider>
+            {children}
+        </AnimationProvider>
         <Toaster />
       </body>
     </html>
