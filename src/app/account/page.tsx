@@ -15,12 +15,20 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, User, Mail, Phone, Edit } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 export default function AccountPage() {
   const [quotes, setQuotes] = useState<MyQuote[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Mock user data - in a real app, this would come from your auth provider
+  const user = {
+    name: 'Jane Doe',
+    email: 'jane.doe@example.com',
+    phone: '+1 (555) 123-4567',
+  };
 
   useEffect(() => {
     async function fetchQuotes() {
@@ -41,7 +49,37 @@ export default function AccountPage() {
     <div className="flex min-h-dvh flex-col bg-background">
       <Header />
       <main className="flex-1 py-12 sm:py-16 md:py-20">
-        <div className="container mx-auto max-w-4xl px-4">
+        <div className="container mx-auto max-w-4xl px-4 space-y-8">
+           <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-3xl font-bold tracking-tight">Account Information</CardTitle>
+                <CardDescription>View and edit your personal details.</CardDescription>
+              </div>
+               <Button variant="outline">
+                <Edit className="mr-2 h-4 w-4" /> Edit Profile
+              </Button>
+            </CardHeader>
+            <CardContent>
+               <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium">{user.name}</span>
+                </div>
+                <Separator />
+                <div className="flex items-center gap-4">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium">{user.email}</span>
+                </div>
+                <Separator />
+                <div className="flex items-center gap-4">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium">{user.phone}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-3xl font-bold tracking-tight">My Quotes</CardTitle>
