@@ -6,6 +6,9 @@ import { Logo } from '@/components/logo';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { User } from 'lucide-react';
+
 
 export function Header() {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -13,7 +16,7 @@ export function Header() {
   const navLinks = [
     { href: '/#portfolio', label: 'Portfolio' },
     { href: '/#about', label: 'About' },
-    { href: '/#contact', label: 'Contact' },
+    { href: '/#contact', label: 'Get a Quote' },
     { href: '/account', label: 'My Account'},
   ];
 
@@ -23,7 +26,13 @@ export function Header() {
   ) => {
     e.preventDefault();
     if (href.startsWith('/#')) {
-        document.querySelector(href.substring(1))?.scrollIntoView({ behavior: 'smooth' });
+        const targetElement = document.querySelector(href.substring(1));
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          // Fallback for when element is not on the current page
+          window.location.href = href;
+        }
     } else {
         window.location.href = href;
     }
@@ -36,7 +45,13 @@ export function Header() {
   ) => {
     if (href.startsWith('/#')) {
         e.preventDefault();
-        document.querySelector(href.substring(1))?.scrollIntoView({ behavior: 'smooth' });
+        const targetElement = document.querySelector(href.substring(1));
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          // Fallback for when element is not on the current page
+          window.location.href = href;
+        }
         setIsOpen(false);
     }
   }
@@ -60,10 +75,7 @@ export function Header() {
         </nav>
         <div className="hidden md:flex items-center gap-4">
           <Link href="/login">
-            <Button variant="ghost">Login</Button>
-          </Link>
-          <Link href="/signup">
-            <Button>Sign Up</Button>
+            <Button>Login / Sign Up</Button>
           </Link>
         </div>
         <div className="md:hidden">
@@ -90,7 +102,7 @@ export function Header() {
                     </Link>
                   ))}
                 </nav>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 pt-4 border-t">
                     <Link href="/login">
                         <Button variant="outline" className="w-full">Login</Button>
                     </Link>
