@@ -11,7 +11,7 @@ export function Logo({ className }: { className?: string }) {
     >
       <Cog className="h-6 w-6 text-primary" />
       <span className="text-xl font-bold tracking-tight font-headline text-foreground">
-        Webara Studio
+        <span className="text-accent">WE</span>bara Studio
       </span>
     </Link>
   );
