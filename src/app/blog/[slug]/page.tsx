@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // This function generates the static paths for each blog post
 export async function generateStaticParams() {
@@ -59,8 +61,11 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
             
             <div 
               className="prose prose-lg prose-invert max-w-none text-foreground/80"
-              dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }} 
-            />
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {post.content}
+              </ReactMarkdown>
+            </div>
 
             <Separator />
 
