@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/logo';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function Header() {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -34,7 +35,7 @@ export function Header() {
               key={link.href}
               href={link.href}
               onClick={(e) => handleScroll(e, link.href)}
-              className="text-sm font-medium text-foreground/70 transition-colors hover:text-foreground"
+              className="relative text-sm font-medium text-foreground/70 transition-colors hover:text-foreground after:content-[''] after:absolute after:left-1/2 after:bottom-[-2px] after:h-[1.5px] after:w-0 after:bg-primary after:transition-all after:duration-300 after:-translate-x-1/2 hover:after:w-full"
               prefetch={false}
             >
               {link.label}
