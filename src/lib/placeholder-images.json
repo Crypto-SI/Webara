@@ -1,3 +1,40 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "portfolio-1",
+      "description": "Abstract design for a modern website",
+      "imageUrl": "https://images.unsplash.com/photo-1600327222811-3a13fc41dd8e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWJzdHJhY3QlMjBkZXNpZ258ZW58MHx8fHwxNzU4NTg0ODY2fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract design"
+    },
+    {
+      "id": "portfolio-2",
+      "description": "E-commerce platform interface",
+      "imageUrl": "https://images.unsplash.com/photo-1720135885007-454165745e21?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxlY29tbWVyY2UlMjBpbnRlcmZhY2V8ZW58MHx8fHwxNzU4NjUwODk0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ecommerce interface"
+    },
+    {
+      "id": "portfolio-3",
+      "description": "Mobile application dashboard",
+      "imageUrl": "https://images.unsplash.com/photo-1672991281490-bcaecb8df17a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtb2JpbGUlMjBkYXNoYm9hcmR8ZW58MHx8fHwxNzU4NjYyMDQ3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mobile dashboard"
+    },
+    {
+      "id": "portfolio-4",
+      "description": "Corporate landing page",
+      "imageUrl": "https://images.unsplash.com/photo-1553484771-0a615f264d58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjb3Jwb3JhdGUlMjB3ZWJzaXRlfGVufDB8fHx8MTc1ODYxMzk2NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "corporate website"
+    },
+    {
+      "id": "about-us-image",
+      "description": "Team collaborating in a modern office",
+      "imageUrl": "https://images.unsplash.com/photo-1492366254240-43affaefc3e3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx0ZWFtJTIwY29sbGFib3JhdGlvbnxlbnwwfHx8fDE3NTg1ODUzMjF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "team collaboration"
+    },
+    {
+      "id": "hero-image",
+      "description": "Abstract digital art representing technology",
+      "imageUrl": "https://images.unsplash.com/photo-1634986666676-ec8fd927c23d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxkaWdpdGFsJTIwYXJ0fGVufDB8fHx8MTc1ODU4NTA2N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "digital art"
+    }
+  ]
 }
