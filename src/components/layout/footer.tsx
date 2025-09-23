@@ -1,3 +1,4 @@
+
 import { Logo } from '@/components/logo';
 import Link from 'next/link';
 
@@ -11,6 +12,13 @@ export function Footer() {
             © {new Date().getFullYear()} Webara Studio. All rights reserved.
           </p>
           <div className="flex gap-4">
+             <Link
+              href="/admin/new-post"
+              className="text-sm text-foreground/70 hover:text-foreground"
+              prefetch={false}
+            >
+              Admin
+            </Link>
             <Link
               href="/privacy-policy"
               className="text-sm text-foreground/70 hover:text-foreground"

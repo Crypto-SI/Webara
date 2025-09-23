@@ -1,3 +1,4 @@
+
 'use server';
 
 import {
@@ -10,6 +11,7 @@ import {
 } from '@/ai/flows/generate-collaboration-suggestions';
 import { generateTts, type TtsOutput } from '@/ai/flows/generate-tts';
 import { QuoteFormSchema, type QuoteFormValues } from '@/lib/types';
+import type { BlogPost } from '@/lib/blog-posts';
 
 export type AiQuoteAndSuggestions = QuoteOutput &
   CollaborationSuggestionsOutput;
@@ -187,4 +189,36 @@ export async function getQuoteDetailsAction(id: string): Promise<{
     }
   }
   return { success: false, data: null, error: "Quote not found." };
+}
+
+// Omit 'slug' and 'date' as they will be generated
+export type NewPostValues = Omit<BlogPost, 'slug' | 'date'>;
+
+export async function createBlogPostAction(
+  values: NewPostValues
+): Promise<{ success: boolean; data: BlogPost | null; error: string | null }> {
+  // This is a placeholder. In a real application, you would save this
+  // to your Supabase database. You would also need to handle slug generation
+  // to ensure it's unique.
+  
+  // For demonstration, we'll log the data to the console and return a success response.
+  try {
+    const slug = values.title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+    const newPost: BlogPost = {
+      ...values,
+      slug,
+      date: new Date().toISOString(),
+    };
+
+    console.log('New Blog Post Created (Placeholder):', newPost);
+
+    // In a real app, you would now write `newPost` to your `blog-posts.json`
+    // or (preferably) save it to your Supabase database.
+    // NOTE: Writing to the filesystem at runtime is not reliable in serverless environments.
+
+    return { success: true, data: newPost, error: null };
+  } catch (error) {
+    console.error('Failed to create blog post:', error);
+    return { success: false, data: null, error: 'An unexpected error occurred.' };
+  }
 }
