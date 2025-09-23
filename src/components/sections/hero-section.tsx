@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { TypingAnimation } from '@/components/typing-animation';
 
 export function HeroSection() {
   const heroImage = PlaceHolderImages.find((p) => p.id === 'hero-image');
@@ -20,9 +21,13 @@ export function HeroSection() {
     <section className="w-full py-24 md:py-32 lg:py-40">
       <div className="container grid gap-10 lg:grid-cols-2 lg:gap-16">
         <div className="flex flex-col items-center justify-center space-y-6 text-center lg:items-start lg:text-left">
-          <h1 className="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
-            <span className="text-accent">WE BUILD</span> DIGITAL EXPERIENCES
-          </h1>
+          <TypingAnimation
+            className="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline"
+            parts={[
+              { text: 'WE BUILD ', className: 'text-accent' },
+              { text: 'DIGITAL EXPERIENCES' },
+            ]}
+          />
           <p className="max-w-[600px] text-foreground/80 md:text-xl">
             From stunning websites to intuitive mobile apps, we craft digital
             solutions that captivate your audience and drive results. Let's
