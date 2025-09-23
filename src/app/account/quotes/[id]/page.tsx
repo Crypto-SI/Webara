@@ -20,7 +20,7 @@ import { Sparkles, Phone, XCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 export default function QuoteDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+  const id = params.id;
   const [quote, setQuote] = useState<MyQuote | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
