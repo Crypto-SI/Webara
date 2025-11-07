@@ -1,6 +1,7 @@
 
 'use server';
 
+import { auth } from '@clerk/nextjs/server';
 import {
   provideAiPoweredQuote,
   type QuoteOutput,
@@ -12,11 +13,16 @@ import {
 import { generateTts, type TtsOutput } from '@/ai/flows/generate-tts';
 import { QuoteFormSchema, type QuoteFormValues } from '@/lib/types';
 import type { BlogPost } from '@/lib/blog-posts';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+import type { Database } from '@/lib/database.types';
+
+type QuoteRow = Database['public']['Tables']['quotes']['Row'];
+type QuoteInsert = Database['public']['Tables']['quotes']['Insert'];
 
 export type AiQuoteAndSuggestions = QuoteOutput &
   CollaborationSuggestionsOutput;
-  
-export type QuoteStatus = 'Pending' | 'Accepted' | 'Rejected' | 'Call Requested';
+
+export type QuoteStatus = QuoteRow['status'];
 
 export type MyQuote = {
   id: string;
@@ -26,7 +32,102 @@ export type MyQuote = {
   suggestedCollaboration: string;
   suggestions: string[];
   status: QuoteStatus;
+  estimatedCost: number | null;
+  currency: string;
+  createdAt: string;
 };
+
+function summarizeText(text?: string | null, fallback = 'No summary provided yet.'): string {
+  if (!text) {
+    return fallback;
+  }
+
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (!normalized) {
+    return fallback;
+  }
+
+  if (normalized.length <= 160) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, 157)}...`;
+}
+
+function sanitizeSuggestions(value: QuoteRow['ai_suggestions']): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+  }
+
+  if (value && typeof value === 'object' && 'suggestions' in (value as Record<string, unknown>)) {
+    const maybeArray = (value as Record<string, unknown>).suggestions;
+    if (Array.isArray(maybeArray)) {
+      return maybeArray.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+    }
+  }
+
+  return [];
+}
+
+function mapQuoteRowToMyQuote(row: QuoteRow): MyQuote {
+  return {
+    id: row.id,
+    title: row.title,
+    summary: summarizeText(row.ai_quote ?? row.website_needs),
+    quote: row.ai_quote ?? 'This quote is being generated. Please check back shortly.',
+    suggestedCollaboration:
+      row.suggested_collaboration ??
+      'Our team will review your project and share a tailored collaboration path.',
+    suggestions: sanitizeSuggestions(row.ai_suggestions),
+    status: row.status,
+    estimatedCost: row.estimated_cost,
+    currency: row.currency ?? 'USD',
+    createdAt: row.created_at,
+  };
+}
+
+function parseBudgetAverage(budget?: string | null): number | null {
+  if (!budget) return null;
+  const matches = budget.replace(/,/g, '').match(/\d+(\.\d+)?/g);
+  if (!matches) return null;
+  const values = matches
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+  if (values.length === 0) return null;
+  const sum = values.reduce((acc, value) => acc + value, 0);
+  return Number((sum / values.length).toFixed(2));
+}
+
+function inferCurrencyFromText(text?: string | null): string | null {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+  if (lower.includes('eur') || lower.includes('€')) return 'EUR';
+  if (lower.includes('gbp') || lower.includes('£')) return 'GBP';
+  if (lower.includes('aud')) return 'AUD';
+  if (lower.includes('cad')) return 'CAD';
+  if (lower.includes('inr') || lower.includes('₹')) return 'INR';
+  if (lower.includes('usd') || lower.includes('$')) return 'USD';
+  return null;
+}
+
+function deriveProjectTitle(
+  aiResult: AiQuoteAndSuggestions,
+  formValues: QuoteFormValues
+): string {
+  if (aiResult.projectTitle?.trim()) {
+    return aiResult.projectTitle.trim().slice(0, 80);
+  }
+
+  const needs = formValues.websiteNeeds.trim();
+  if (needs) {
+    const firstSentence = needs.split(/[.!?]/)[0]?.trim();
+    if (firstSentence) {
+      return firstSentence.slice(0, 80);
+    }
+  }
+
+  return `Website project for ${formValues.name}`.slice(0, 80);
+}
 
 
 export async function getAiQuoteAction(
@@ -96,82 +197,111 @@ export async function getTtsAction(
   }
 }
 
+export async function proposeQuoteAction({
+  formValues,
+  aiResult,
+}: {
+  formValues: QuoteFormValues;
+  aiResult: AiQuoteAndSuggestions;
+}): Promise<{ success: boolean; data: MyQuote | null; error: string | null }> {
+  const parsedForm = QuoteFormSchema.safeParse(formValues);
+  if (!parsedForm.success) {
+    return { success: false, data: null, error: 'Invalid form data.' };
+  }
+
+  const { userId } = await auth();
+  if (!userId) {
+    return {
+      success: false,
+      data: null,
+      error: 'Please sign in to propose this project to Webara.',
+    };
+  }
+
+  try {
+    const supabase = createServerSupabaseClient();
+    const normalizedAiEstimate = Number.isFinite(aiResult.estimatedCost)
+      ? Number(aiResult.estimatedCost)
+      : null;
+    const estimatedCost =
+      normalizedAiEstimate ?? parseBudgetAverage(parsedForm.data.budget);
+    const currency =
+      (aiResult.currency ||
+        inferCurrencyFromText(parsedForm.data.budget) ||
+        'USD')
+        .toUpperCase();
+
+    const insertPayload: QuoteInsert = {
+      user_id: userId,
+      title: deriveProjectTitle(aiResult, parsedForm.data),
+      website_needs: parsedForm.data.websiteNeeds,
+      collaboration_preferences:
+        parsedForm.data.collaborationPreferences || null,
+      budget_range: parsedForm.data.budget || null,
+      ai_quote: aiResult.quote,
+      suggested_collaboration: aiResult.suggestedCollaboration,
+      ai_suggestions: aiResult.suggestions,
+      status: 'pending',
+      estimated_cost: estimatedCost ?? null,
+      currency,
+    };
+
+    const { data, error } = await supabase
+      .from('quotes')
+      .insert(insertPayload)
+      .select('*')
+      .single();
+
+    if (error || !data) {
+      throw error ?? new Error('Failed to save quote.');
+    }
+
+    return { success: true, data: mapQuoteRowToMyQuote(data), error: null };
+  } catch (error) {
+    console.error('Failed to save quote to Supabase:', error);
+    return {
+      success: false,
+      data: null,
+      error: 'Unable to save your quote right now. Please try again.',
+    };
+  }
+}
+
 export async function getMyQuotesAction(): Promise<{
   success: boolean;
   data: MyQuote[] | null;
   error: string | null;
 }> {
-  // This is a placeholder. In a real application, you would fetch
-  // the user's quotes from your Supabase database.
-  // This requires user authentication, which is not implemented here.
+  const { userId } = await auth();
+  if (!userId) {
+    return { success: false, data: null, error: 'Unauthorized' };
+  }
 
-  // For demonstration purposes, we'll return some mock data.
-  const mockQuotes: MyQuote[] = [
-    {
-      id: 'quote-1',
-      title: 'E-commerce Site for Clothing Brand',
-      summary: 'Quote for e-commerce site: $10,000. Suggested collaboration: 10% revenue share.',
-      quote:
-        'Based on your needs for a 5-page e-commerce site, we estimate a project cost of $10,000. This includes design, development, and basic SEO setup.',
-      suggestedCollaboration:
-        'A 10% revenue share model would be an excellent fit, aligning our success with yours.',
-      suggestions: [
-        'Offer a subscription box for curated outfits.',
-        'Implement a customer loyalty program with exclusive discounts.',
-        'Partner with influencers for social media marketing campaigns.',
-      ],
-      status: 'Accepted'
-    },
-    {
-      id: 'quote-2',
-      title: 'Portfolio Site for Photographer',
-      summary: 'Quote for portfolio site: $2,500. Suggested collaboration: Fixed price.',
-      quote:
-        'For a professional portfolio website to showcase your photography, we propose a fixed price of $2,500. This covers a custom design with up to 5 gallery pages.',
-      suggestedCollaboration:
-        'A fixed-price project is ideal for this scope, providing clear deliverables and a set budget.',
-      suggestions: [
-        'Integrate a blog to share stories behind your photos.',
-        'Sell prints directly from your website.',
-        'Offer online workshops or tutorials.',
-      ],
-      status: 'Pending'
-    },
-    {
-      id: 'quote-3',
-      title: 'Mobile App for Food Delivery',
-      summary: 'Quote for mobile app design: $15,000. Suggested collaboration: Price per lead.',
-      quote:
-        'The design and prototyping for a food delivery mobile app is estimated at $15,000. This includes user flow mapping, UI/UX design, and interactive prototypes.',
-      suggestedCollaboration:
-        'A price-per-lead model could be effective post-launch, where we earn a commission for each restaurant that signs up through the app.',
-      suggestions: [
-        'Gamify the ordering experience with points and rewards.',
-        'Feature a "chef\'s special" of the day from partner restaurants.',
-        'Allow users to create and share custom food collections.',
-      ],
-      status: 'Rejected'
-    },
-     {
-      id: 'quote-4',
-      title: 'Corporate Website Redesign',
-      summary: 'Quote for corporate website redesign: $8,000. Collaboration: Fixed price.',
-      quote: 'A complete redesign of your corporate website is estimated at $8,000. This includes a modern UI/UX, mobile optimization, and a content management system.',
-      suggestedCollaboration: 'A fixed-price engagement is recommended to ensure budget and timeline adherence.',
-      suggestions: [
-        'Add an interactive timeline of the company\'s history.',
-        'Create a dedicated careers portal with an online application system.',
-        'Develop a resource center with case studies and whitepapers.',
-      ],
-      status: 'Call Requested',
-    },
-  ];
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from('quotes')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ success: true, data: mockQuotes, error: null });
-    }, 1000);
-  });
+    if (error) {
+      throw error;
+    }
+
+    return {
+      success: true,
+      data: data?.map(mapQuoteRowToMyQuote) ?? [],
+      error: null,
+    };
+  } catch (error) {
+    console.error('Failed to load quotes from Supabase:', error);
+    return {
+      success: false,
+      data: null,
+      error: 'Unable to load your quotes right now.',
+    };
+  }
 }
 
 
@@ -180,15 +310,36 @@ export async function getQuoteDetailsAction(id: string): Promise<{
   data: MyQuote | null;
   error: string | null;
 }> {
-  // This is a placeholder. In a real app, you would fetch from Supabase.
-  const result = await getMyQuotesAction();
-  if (result.success && result.data) {
-    const quote = result.data.find(q => q.id === id);
-    if (quote) {
-      return { success: true, data: quote, error: null };
-    }
+  const { userId } = await auth();
+  if (!userId) {
+    return { success: false, data: null, error: 'Unauthorized' };
   }
-  return { success: false, data: null, error: "Quote not found." };
+
+  try {
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase
+      .from('quotes')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return { success: false, data: null, error: 'Quote not found.' };
+    }
+
+    return { success: true, data: mapQuoteRowToMyQuote(data), error: null };
+  } catch (error) {
+    console.error('Failed to load quote details:', error);
+    return {
+      success: false,
+      data: null,
+      error: 'Unable to load this quote. Please try again later.',
+    };
+  }
 }
 
 // Omit 'slug' and 'date' as they will be generated

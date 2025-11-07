@@ -59,6 +59,25 @@ export function HeroSection() {
                 data-ai-hint={heroImage.imageHint}
                 priority
               />
+              <Image
+                src="/webarabadgelight.png"
+                alt="Webara mark"
+                width={120}
+                height={120}
+                className="pointer-events-none absolute -left-8 -top-8 hidden h-28 w-28 -rotate-6 select-none drop-shadow-2xl sm:block"
+              />
+              <div className="pointer-events-none absolute bottom-6 left-6 flex items-center gap-3 rounded-full bg-foreground/95 px-4 py-2 text-background shadow-lg shadow-primary/20">
+                <Image
+                  src="/webarabadge.png"
+                  alt="Webara badge"
+                  width={44}
+                  height={44}
+                  className="h-10 w-10"
+                />
+                <span className="text-xs font-semibold uppercase tracking-[0.2em]">
+                  Trusted Studio
+                </span>
+              </div>
             </div>
           )}
         </div>

@@ -1,11 +1,24 @@
 // src/components/logo.tsx
 'use client';
-import { Cog } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { useAnimation } from '@/context/animation-context';
+import { useAnimation } from '@/contexts/animation-context';
 
-export function Logo({ className }: { className?: string }) {
+type LogoVariant = 'light' | 'dark';
+
+const logoByVariant: Record<LogoVariant, string> = {
+  light: '/webaralogo.png',
+  dark: '/webaralogolight.png',
+};
+
+export function Logo({
+  className,
+  variant = 'dark',
+}: {
+  className?: string;
+  variant?: LogoVariant;
+}) {
   const { playAnimation } = useAnimation();
   const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (window.location.pathname === '/') {
@@ -13,17 +26,21 @@ export function Logo({ className }: { className?: string }) {
       playAnimation();
     }
   };
+
   return (
     <Link
       href="/"
       onClick={handleLogoClick}
-      className={cn('flex items-center gap-2', className)}
+      className={cn('flex items-center', className)}
       prefetch={false}
     >
-      <Cog className="h-6 w-6 text-primary" />
-      <span className="text-xl font-bold tracking-tight font-headline text-foreground">
-        <span className="text-accent">We</span>bara Studio
-      </span>
+      <Image
+        src={logoByVariant[variant]}
+        alt="Webara Studio"
+        width={160}
+        height={42}
+        className="h-8 w-auto md:h-10"
+      />
     </Link>
   );
 }

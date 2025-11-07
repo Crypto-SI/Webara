@@ -1,24 +1,55 @@
 "use client";
-import React from 'react';
+import React, { useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/logo';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { User } from 'lucide-react';
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  useClerk,
+  useUser,
+} from '@clerk/nextjs';
 
 
 export function Header() {
   const [isOpen, setIsOpen] = React.useState(false);
+  const { user } = useUser();
+  const clerk = useClerk();
+  const router = useRouter();
+  const displayName =
+    user?.fullName ||
+    user?.primaryEmailAddress?.emailAddress?.split('@')[0] ||
+    'Account';
+  const isAdmin =
+    ((user?.publicMetadata?.role as string | undefined)?.toLowerCase() ||
+      '').includes('admin');
+  const dashboardHref = isAdmin ? '/admin' : '/profile';
+
+  const handleSignOut = useCallback(async () => {
+    await clerk.signOut();
+    setIsOpen(false);
+    router.push('/');
+    router.refresh();
+  }, [clerk, router]);
 
   const navLinks = [
     { href: '/#portfolio', label: 'Portfolio' },
     { href: '/#about', label: 'About' },
     { href: '/blog', label: 'Blog' },
     { href: '/#contact', label: 'Get a Quote' },
-    { href: '/account', label: 'My Account'},
+    { href: '/profile', label: 'My Profile'},
   ];
 
   const handleScroll = (
@@ -75,9 +106,37 @@ export function Header() {
           ))}
         </nav>
         <div className="hidden md:flex items-center gap-4">
-          <Link href="/login">
-            <Button>Login / Sign Up</Button>
-          </Link>
+          <SignedIn>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <User className="h-4 w-4" />
+                  <span>{displayName}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <Link href={dashboardHref}>Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    void handleSignOut();
+                  }}
+                >
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SignedIn>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <Button>Login</Button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <Button variant="outline">Sign Up</Button>
+            </SignUpButton>
+          </SignedOut>
         </div>
         <div className="md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -88,6 +147,10 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Mobile navigation menu</SheetTitle>
+                <SheetDescription>Select a destination to navigate</SheetDescription>
+              </SheetHeader>
               <div className="flex flex-col gap-6 p-6">
                 <Logo />
                 <nav className="flex flex-col gap-4">
@@ -104,12 +167,34 @@ export function Header() {
                   ))}
                 </nav>
                 <div className="flex flex-col gap-2 pt-4 border-t">
-                    <Link href="/login">
-                        <Button variant="outline" className="w-full">Login</Button>
-                    </Link>
-                    <Link href="/signup">
+                  <SignedIn>
+                    <>
+                      <Button asChild className="w-full" onClick={() => setIsOpen(false)}>
+                        <Link href={dashboardHref}>Dashboard</Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          void handleSignOut();
+                        }}
+                      >
+                        Sign Out
+                      </Button>
+                    </>
+                  </SignedIn>
+                  <SignedOut>
+                    <>
+                      <SignInButton mode="modal">
+                        <Button variant="outline" className="w-full">
+                          Login
+                        </Button>
+                      </SignInButton>
+                      <SignUpButton mode="modal">
                         <Button className="w-full">Sign Up</Button>
-                    </Link>
+                      </SignUpButton>
+                    </>
+                  </SignedOut>
                 </div>
               </div>
             </SheetContent>

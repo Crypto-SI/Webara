@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useUser } from '@clerk/nextjs';
 import { QuoteFormSchema, type QuoteFormValues } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   getAiQuoteAction,
   getTtsAction,
+  proposeQuoteAction,
   type AiQuoteAndSuggestions,
 } from '@/app/actions';
 import {
@@ -44,7 +47,11 @@ export function QuoteSection() {
   const [error, setError] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTtsLoading, setIsTtsLoading] = useState(false);
+  const [isSavingQuote, setIsSavingQuote] = useState(false);
+  const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { isSignedIn } = useUser();
 
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(QuoteFormSchema),
@@ -61,6 +68,8 @@ export function QuoteSection() {
     setIsLoading(true);
     setError(null);
     setResult(null);
+    setSavedQuoteId(null);
+    setSaveError(null);
 
     const response = await getAiQuoteAction(values);
 
@@ -95,6 +104,55 @@ export function QuoteSection() {
       console.error(response.error);
     }
   }
+
+  async function handleProposeQuote() {
+    if (!result) return;
+    if (!isSignedIn) {
+      setSaveError('Please sign in to save this proposal to your dashboard.');
+      return;
+    }
+
+    setIsSavingQuote(true);
+    setSaveError(null);
+
+    const response = await proposeQuoteAction({
+      formValues: form.getValues(),
+      aiResult: result,
+    });
+
+    if (response.success && response.data) {
+      setSavedQuoteId(response.data.id);
+    } else {
+      setSaveError(
+        response.error ||
+          'We could not send this proposal to Webara. Please try again.'
+      );
+    }
+
+    setIsSavingQuote(false);
+  }
+
+  const formatEstimate = (amount?: number, currency?: string) => {
+    if (typeof amount !== 'number' || Number.isNaN(amount)) return null;
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: (currency || 'USD').toUpperCase(),
+        maximumFractionDigits: 0,
+      }).format(amount);
+    } catch {
+      return `$${amount.toLocaleString()}`;
+    }
+  };
+
+  const extractCollaborationFocus = (text: string) => {
+    return (
+      text
+        .split('.')
+        .map((sentence) => sentence.trim())
+        .find((sentence) => sentence.length > 0) || text
+    );
+  };
 
   return (
     <>
@@ -238,6 +296,40 @@ export function QuoteSection() {
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
+                <div className="rounded-lg border border-border/60 bg-muted/40 p-4 space-y-2">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      Project Title
+                    </p>
+                    <p className="text-base font-semibold">
+                      {result.projectTitle}
+                    </p>
+                  </div>
+                  <p className="text-sm text-foreground/80">
+                    {result.projectSummary}
+                  </p>
+                  <div className="grid gap-3 pt-3 sm:grid-cols-2">
+                    <div className="rounded-md border border-border/50 bg-background p-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Estimated Investment
+                      </p>
+                      <p className="text-lg font-semibold">
+                        {formatEstimate(result.estimatedCost, result.currency) ||
+                          'Pending refinement'}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-border/50 bg-background p-3">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Collaboration Focus
+                      </p>
+                      <p className="text-sm font-semibold">
+                        {extractCollaborationFocus(
+                          result.suggestedCollaboration
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-semibold">Estimated Quote</h4>
@@ -289,10 +381,38 @@ export function QuoteSection() {
               </AlertDialogDescription>
             </AlertDialogHeader>
           )}
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setIsDialogOpen(false)}>
-              Close
-            </AlertDialogAction>
+          <AlertDialogFooter className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm">
+              {saveError && <p className="text-destructive">{saveError}</p>}
+              {savedQuoteId && (
+                <p className="text-emerald-600">
+                  Proposal sent! You can review it from your dashboard.
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {!savedQuoteId && result && (
+                <Button
+                  type="button"
+                  className="bg-emerald-600 text-white hover:bg-emerald-700"
+                  onClick={handleProposeQuote}
+                  disabled={isSavingQuote}
+                >
+                  {isSavingQuote ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Propose to Webara
+                </Button>
+              )}
+              {savedQuoteId && (
+                <Button variant="outline" asChild>
+                  <Link href="/profile">View Dashboard</Link>
+                </Button>
+              )}
+              <AlertDialogAction onClick={() => setIsDialogOpen(false)}>
+                Close
+              </AlertDialogAction>
+            </div>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

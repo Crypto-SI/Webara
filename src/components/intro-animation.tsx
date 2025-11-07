@@ -1,8 +1,8 @@
 // src/components/intro-animation.tsx
 'use client';
 
-import { Cog } from 'lucide-react';
-import { useAnimation } from '@/context/animation-context';
+import Image from 'next/image';
+import { useAnimation } from '@/contexts/animation-context';
 
 export function IntroAnimation() {
   const { isFadingOut } = useAnimation();
@@ -13,14 +13,25 @@ export function IntroAnimation() {
         isFadingOut ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      <div className="flex items-center gap-4">
-        <div className="animate-spin-slow">
-          <Cog className="h-12 w-12 text-primary" />
+      <div className="flex items-center gap-5">
+        <div className="animate-spin-slow rounded-full bg-primary/10 p-3 shadow-lg shadow-primary/30">
+          <Image
+            src="/webarabadgelight.png"
+            alt="Webara badge"
+            width={64}
+            height={64}
+            className="h-12 w-12"
+          />
         </div>
         <div className="overflow-hidden">
-          <h1 className="text-4xl font-bold tracking-tight font-headline text-foreground animate-slide-in-right">
-            <span className="text-accent">We</span>bara Studio
-          </h1>
+          <Image
+            src="/webaralogolight.png"
+            alt="Webara Studio"
+            width={220}
+            height={60}
+            className="h-12 w-auto animate-slide-in-right md:h-14"
+            priority
+          />
         </div>
       </div>
     </div>

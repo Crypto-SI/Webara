@@ -75,6 +75,21 @@ export function AboutSection() {
                 </div>
               </div>
             </div>
+            <div className="rounded-2xl bg-foreground p-6 text-background shadow-lg shadow-primary/10">
+              <Image
+                src="/webaralogo.png"
+                alt="Webara Studio logo"
+                width={200}
+                height={60}
+                className="h-10 w-auto"
+              />
+              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.3em] text-background/80">
+                Crafting Experiences Since 2016
+              </p>
+              <p className="mt-2 text-sm text-background/70">
+                Our badge represents the balance of strategy, design, and engineering that powers every client engagement.
+              </p>
+            </div>
           </div>
         </div>
       </div>

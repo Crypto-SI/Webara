@@ -1,12 +1,26 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
+import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { AnimationProvider } from '@/context/animation-context';
+import { AppProviders } from './providers';
 
 export const metadata: Metadata = {
   title: 'Webara Studio',
   description: 'We build digital experiences.',
+  icons: {
+    icon: [
+      { url: '/W.png', sizes: 'any', type: 'image/png' },
+      { url: '/favicon/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon/favicon.ico', rel: 'shortcut icon' },
+    ],
+    apple: [
+      { url: '/favicon/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: '/favicon/favicon.ico',
+  },
+  manifest: '/favicon/site.webmanifest',
 };
 
 export default function RootLayout({
@@ -15,25 +29,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="!scroll-smooth">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="font-body antialiased">
-        <AnimationProvider>
-            {children}
-        </AnimationProvider>
-        <Toaster />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className="!scroll-smooth">
+        <head>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link
+            rel="preconnect"
+            href="https://fonts.gstatic.com"
+            crossOrigin="anonymous"
+          />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+            rel="stylesheet"
+          />
+        </head>
+        <body className="font-body antialiased">
+          <AppProviders>{children}</AppProviders>
+          <Toaster />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
