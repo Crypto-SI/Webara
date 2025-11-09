@@ -24,14 +24,12 @@ export function HeroSection() {
           <TypingAnimation
             className="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline"
             parts={[
-              { text: 'WE BUILD ', className: 'text-accent' },
-              { text: 'DIGITAL EXPERIENCES' },
+              { text: 'BUILD SMARTER, ', className: 'text-accent' },
+              { text: 'TOGETHER' },
             ]}
           />
           <p className="max-w-[600px] text-foreground/80 md:text-xl">
-            From stunning websites to intuitive mobile apps, we craft digital
-            solutions that captivate your audience and drive results. Let's
-            build something amazing together.
+            Join our partner network to co-create cutting-edge digital products at a fraction of the cost, with shared innovation, transparent pricing, and enterprise-level quality.
           </p>
           <div className="flex flex-col gap-4 min-[400px]:flex-row">
             <Link href="#contact" onClick={(e) => handleScroll(e, '#contact')}>
@@ -76,6 +74,17 @@ export function HeroSection() {
                 />
                 <span className="text-xs font-semibold uppercase tracking-[0.2em]">
                   Trusted Studio
+                </span>
+              </div>
+              <div className="pointer-events-none absolute top-4 right-6 flex h-24 w-24 flex-col items-center justify-center rounded-full bg-accent text-background text-center shadow-2xl shadow-accent/40 ring-4 ring-background/80">
+                <span className="text-[9px] font-semibold uppercase tracking-[0.15em]">
+                  Up To
+                </span>
+                <span className="text-2xl font-extrabold leading-none">
+                  100%
+                </span>
+                <span className="text-[9px] font-semibold uppercase tracking-[0.15em]">
+                  Off Builds
                 </span>
               </div>
             </div>
