@@ -35,6 +35,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Table,
   TableBody,
   TableCell,
@@ -50,6 +57,7 @@ import {
   RefreshCw,
   Users as UsersIcon,
   Handshake,
+  MessageCircle,
 } from 'lucide-react';
 import { UsersWithProposals } from '@/components/admin/users-with-proposals';
 
@@ -146,6 +154,8 @@ function DashboardContent() {
   const [isSavingFeedback, setIsSavingFeedback] = useState(false);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
   const [feedbackSuccess, setFeedbackSuccess] = useState<string | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const { signOut } = useSimpleAuth();
   const router = useRouter();
 
@@ -154,33 +164,28 @@ function DashboardContent() {
     setError(null);
 
     try {
-      console.log('Loading admin dashboard...');
       const response = await fetch('/api/admin/overview', {
         method: 'GET',
         cache: 'no-store',
       });
 
-      console.log('API response status:', response.status);
-
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as
           | { error?: string }
           | null;
-        console.error('API error response:', body);
-        
-        // Handle empty response or missing error message
+
         if (!body || Object.keys(body).length === 0) {
-          throw new Error(`API returned status ${response.status} with no error message`);
+          throw new Error(
+            `API returned status ${response.status} with no error message`
+          );
         }
-        
+
         throw new Error(body?.error || `API error: ${response.status}`);
       }
 
       const payload = (await response.json()) as AdminOverviewPayload;
-      console.log('API payload:', payload);
       setData(payload);
     } catch (err) {
-      console.error('Load dashboard error:', err);
       setError(
         err instanceof Error ? err.message : 'Unexpected error loading data.'
       );
@@ -200,6 +205,7 @@ function DashboardContent() {
       return acc;
     }, {});
   }, [data]);
+
   const businessById = useMemo(() => {
     if (!data) return {};
     return data.businesses.reduce<Record<string, BusinessRow>>(
@@ -219,8 +225,12 @@ function DashboardContent() {
     ).length ?? 0;
   const pendingReviews =
     data?.quotes.filter((quote) =>
-      ['pending', 'under_review', 'call_requested'].includes(quote.status)
+      ['pending', 'under_review'].includes(quote.status)
     ).length ?? 0;
+
+  const callRequestedCount =
+    data?.quotes.filter((quote) => quote.status === 'call_requested').length ??
+    0;
 
   const adminCount =
     data?.profiles.filter((profile) => profile.role === 'admin').length ?? 0;
@@ -238,6 +248,7 @@ function DashboardContent() {
       {} as Record<QuoteRow['status'], number>
     );
   }, [data]);
+
   const selectedQuoteOwner = selectedQuote
     ? profileByUserId[selectedQuote.user_id]
     : undefined;
@@ -254,6 +265,7 @@ function DashboardContent() {
     setFeedbackDraft(quote.admin_feedback ?? '');
     setFeedbackError(null);
     setFeedbackSuccess(null);
+    setStatusError(null);
     setIsQuoteDialogOpen(true);
   };
 
@@ -264,6 +276,8 @@ function DashboardContent() {
       setFeedbackDraft('');
       setFeedbackError(null);
       setFeedbackSuccess(null);
+      setStatusError(null);
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -327,7 +341,7 @@ function DashboardContent() {
         return {
           ...prev,
           quotes: prev.quotes.map((quote) =>
-            quote.id === body.quote.id ? body.quote : quote
+            quote.id === body.quote!.id ? body.quote! : quote
           ),
         };
       });
@@ -344,6 +358,101 @@ function DashboardContent() {
     }
   };
 
+  const allStatuses: QuoteRow['status'][] = [
+    'draft',
+    'pending',
+    'under_review',
+    'accepted',
+    'rejected',
+    'call_requested',
+    'project_created',
+  ];
+
+  const quoteStatusBadgeClassesLocal: Record<QuoteRow['status'], string> = {
+    pending: quoteStatusBadgeClasses.pending!,
+    under_review: quoteStatusBadgeClasses.under_review!,
+    accepted: quoteStatusBadgeClasses.accepted!,
+    rejected: quoteStatusBadgeClasses.rejected!,
+    call_requested: quoteStatusBadgeClasses.call_requested!,
+    project_created: quoteStatusBadgeClasses.project_created!,
+    draft: quoteStatusBadgeClasses.draft!,
+  };
+
+  const handleStatusChange = async (quoteId: string, nextStatus: QuoteRow['status']) => {
+    if (!data || !selectedQuote || selectedQuote.id !== quoteId) return;
+
+    setIsUpdatingStatus(true);
+    setStatusError(null);
+
+    // Optimistic update snapshot
+    const prevData = data;
+    const prevSelected = selectedQuote;
+
+    const optimisticallyUpdatedQuote: QuoteRow = {
+      ...selectedQuote,
+      status: nextStatus,
+    };
+
+    setSelectedQuote(optimisticallyUpdatedQuote);
+    setData({
+      ...data,
+      quotes: data.quotes.map((q) =>
+        q.id === quoteId ? { ...q, status: nextStatus } : q
+      ),
+    });
+
+    try {
+      const response = await fetch(
+        `/api/admin/quotes/${encodeURIComponent(quoteId)}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: nextStatus }),
+        }
+      );
+
+      const body = (await response.json().catch(() => null)) as
+        | { error?: string; quote?: QuoteRow }
+        | null;
+
+      if (!response.ok) {
+        // revert on failure
+        setData(prevData);
+        setSelectedQuote(prevSelected);
+        throw new Error(body?.error || 'Failed to update status.');
+      }
+
+      if (!body?.quote) {
+        // revert if payload missing
+        setData(prevData);
+        setSelectedQuote(prevSelected);
+        throw new Error('Status updated but response was incomplete.');
+      }
+
+      // Use server quote as source of truth
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              quotes: current.quotes.map((q) =>
+                q.id === body.quote!.id ? body.quote! : q
+              ),
+            }
+          : current
+      );
+      setSelectedQuote(body.quote);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Failed to update status.';
+      setStatusError(msg);
+      console.error('Status update error:', err);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-muted/20 pb-12">
       <div className="border-b bg-background">
@@ -351,10 +460,12 @@ function DashboardContent() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
             <Logo className="w-fit rounded-full border border-border/70 bg-background px-4 py-2 shadow-sm transition hover:scale-105" />
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+              <h1 className="text-3xl font-bold tracking-tight">
+                Admin Dashboard
+              </h1>
               <p className="text-muted-foreground">
-                Monitor users, businesses, and collaboration progress across the
-                platform.
+                Monitor users, businesses, collaborations, and shared feedback
+                across the platform.
               </p>
             </div>
           </div>
@@ -368,24 +479,37 @@ function DashboardContent() {
               disabled={isLoading}
             >
               <RefreshCw
-                className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
+                className={`mr-2 h-4 w-4 ${
+                  isLoading ? 'animate-spin' : ''
+                }`}
               />
               Refresh
             </Button>
-            <AlertDialog open={signOutDialogOpen} onOpenChange={setSignOutDialogOpen}>
+            <AlertDialog
+              open={signOutDialogOpen}
+              onOpenChange={setSignOutDialogOpen}
+            >
               <AlertDialogTrigger asChild>
                 <Button variant="destructive">Sign Out</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Sign out of your account?</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    Sign out of your account?
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    You will be returned to the landing page. Any unsaved work will be lost.
+                    You will be returned to the landing page. Any unsaved work
+                    will be lost.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isSigningOut}>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleSignOut} disabled={isSigningOut}>
+                  <AlertDialogCancel disabled={isSigningOut}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                  >
                     {isSigningOut ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -415,28 +539,36 @@ function DashboardContent() {
             title="Total Users"
             value={totalUsers}
             description={`Admins: ${adminCount} • Staff: ${staffCount}`}
-            icon={<UsersIcon className="h-5 w-5 text-muted-foreground" />}
+            icon={
+              <UsersIcon className="h-5 w-5 text-muted-foreground" />
+            }
             isLoading={isLoading}
           />
           <SummaryCard
             title="Businesses"
             value={businessCount}
             description="Active records in the pipeline"
-            icon={<Building2 className="h-5 w-5 text-muted-foreground" />}
+            icon={
+              <Building2 className="h-5 w-5 text-muted-foreground" />
+            }
             isLoading={isLoading}
           />
           <SummaryCard
             title="Active Collaborations"
             value={collaborationCount}
             description="Accepted or project-created engagements"
-            icon={<Handshake className="h-5 w-5 text-muted-foreground" />}
+            icon={
+              <Handshake className="h-5 w-5 text-muted-foreground" />
+            }
             isLoading={isLoading}
           />
           <SummaryCard
             title="Items Requiring Attention"
             value={pendingReviews}
             description="Pending, under review, or call requested"
-            icon={<Loader2 className="h-5 w-5 text-muted-foreground" />}
+            icon={
+              <Loader2 className="h-5 w-5 text-muted-foreground" />
+            }
             isLoading={isLoading}
           />
         </div>
@@ -446,7 +578,9 @@ function DashboardContent() {
             <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle>Users</CardTitle>
-                <CardDescription>Full list of platform accounts.</CardDescription>
+                <CardDescription>
+                  Full list of platform accounts.
+                </CardDescription>
               </div>
               {!isLoading && (
                 <span className="text-sm text-muted-foreground">
@@ -473,20 +607,34 @@ function DashboardContent() {
                       return (
                         <TableRow key={profile.user_id}>
                           <TableCell className="font-medium">
-                            {profile.full_name || profile.email || '—'}
+                            {profile.full_name ||
+                              profile.email ||
+                              '—'}
                           </TableCell>
-                          <TableCell>{profile.email || '—'}</TableCell>
+                          <TableCell>
+                            {profile.email || '—'}
+                          </TableCell>
                           <TableCell>
                             <Badge
                               variant="outline"
-                              className={roleBadgeClasses[profile.role || 'user']}
+                              className={
+                                roleBadgeClasses[
+                                  profile.role || 'user'
+                                ]
+                              }
                             >
                               {profile.role || 'user'}
                             </Badge>
                           </TableCell>
-                          <TableCell>{formatDate(profile.clerk_created_at)}</TableCell>
                           <TableCell>
-                            {formatDate(profile.clerk_last_sign_in_at)}
+                            {formatDate(
+                              profile.clerk_created_at
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {formatDate(
+                              profile.clerk_last_sign_in_at
+                            )}
                           </TableCell>
                         </TableRow>
                       );
@@ -509,7 +657,9 @@ function DashboardContent() {
                 <LoadingListPlaceholder rows={5} />
               ) : data ? (
                 <div className="space-y-3">
-                  {(Object.keys(statusBreakdown) as (keyof typeof statusBreakdown)[]).map(
+                  {(Object.keys(
+                    statusBreakdown
+                  ) as (keyof typeof statusBreakdown)[]).map(
                     (status) => (
                       <div
                         key={status}
@@ -517,7 +667,9 @@ function DashboardContent() {
                       >
                         <Badge
                           variant="outline"
-                          className={quoteStatusBadgeClasses[status]}
+                          className={
+                            quoteStatusBadgeClasses[status]
+                          }
                         >
                           {statusLabel(status)}
                         </Badge>
@@ -538,90 +690,39 @@ function DashboardContent() {
           </Card>
         </div>
 
+        {/* Quotes list with feedback visibility */}
         <Card>
           <CardHeader>
-            <CardTitle>Business Pipeline</CardTitle>
+            <CardTitle>Recent Quotes & Feedback</CardTitle>
             <CardDescription>
-              Businesses proposed by users and their primary details.
+              Review collaboration requests and see both Webara and user
+              feedback in one place.
             </CardDescription>
           </CardHeader>
           <CardContent className="overflow-x-auto">
             {isLoading ? (
-              <LoadingTablePlaceholder rows={4} columns={6} />
-            ) : data && data.businesses.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Business</TableHead>
-                    <TableHead>Owner</TableHead>
-                    <TableHead>Industry</TableHead>
-                    <TableHead>Company Size</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Created</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.businesses.map((business) => {
-                    const ownerProfile = profileByUserId[business.owner_id];
-
-                    return (
-                      <TableRow key={business.id}>
-                        <TableCell className="font-medium">
-                          {business.business_name}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span>{ownerProfile?.full_name || '—'}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {ownerProfile?.email || '—'}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>{business.industry || '—'}</TableCell>
-                        <TableCell>{business.company_size || '—'}</TableCell>
-                        <TableCell>{business.business_type || '—'}</TableCell>
-                        <TableCell>{formatDate(business.created_at)}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No businesses have been submitted yet.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Collaboration Requests</CardTitle>
-            <CardDescription>
-              Latest quotes and their collaboration status.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="overflow-x-auto">
-            {isLoading ? (
-              <LoadingTablePlaceholder rows={4} columns={8} />
+              <LoadingTablePlaceholder
+                rows={4}
+                columns={6}
+              />
             ) : data && data.quotes.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>
-                    <TableHead>Owner</TableHead>
+                    <TableHead>Requester</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Budget</TableHead>
-                    <TableHead>Estimated Cost</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Updated</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Admin Feedback</TableHead>
+                    <TableHead>User Feedback</TableHead>
+                    <TableHead className="text-right">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {data.quotes.map((quote) => {
-                    const ownerProfile = profileByUserId[quote.user_id];
-
+                    const ownerProfile =
+                      profileByUserId[quote.user_id];
                     return (
                       <TableRow key={quote.id}>
                         <TableCell className="font-medium">
@@ -629,7 +730,10 @@ function DashboardContent() {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span>{ownerProfile?.full_name || '—'}</span>
+                            <span>
+                              {ownerProfile?.full_name ||
+                                '—'}
+                            </span>
                             <span className="text-xs text-muted-foreground">
                               {ownerProfile?.email || '—'}
                             </span>
@@ -638,24 +742,69 @@ function DashboardContent() {
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className={quoteStatusBadgeClasses[quote.status]}
+                            className={
+                              quoteStatusBadgeClasses[
+                                quote.status
+                              ]
+                                ? quoteStatusBadgeClasses[quote.status]
+                                : ''
+                            }
                           >
                             {statusLabel(quote.status)}
                           </Badge>
+                          {quote.status === 'call_requested' && (
+                            <span className="ml-2 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700">
+                              Call requested
+                            </span>
+                          )}
                         </TableCell>
-                        <TableCell>{quote.budget_range || '—'}</TableCell>
                         <TableCell>
-                          {quote.estimated_cost
-                            ? `${quote.currency} ${quote.estimated_cost}`
-                            : '—'}
+                          {quote.admin_feedback ? (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <MessageCircle className="h-3 w-3" />
+                              <span>
+                                {quote.admin_feedback.length >
+                                40
+                                  ? `${quote.admin_feedback.slice(
+                                      0,
+                                      40
+                                    )}…`
+                                  : quote.admin_feedback}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400">
+                              No admin message
+                            </span>
+                          )}
                         </TableCell>
-                        <TableCell>{formatDate(quote.created_at)}</TableCell>
-                        <TableCell>{formatDate(quote.updated_at)}</TableCell>
+                        <TableCell>
+                          {quote.user_feedback ? (
+                            <div className="flex items-center gap-1 text-xs text-emerald-700">
+                              <MessageCircle className="h-3 w-3" />
+                              <span>
+                                {quote.user_feedback.length >
+                                40
+                                  ? `${quote.user_feedback.slice(
+                                      0,
+                                      40
+                                    )}…`
+                                  : quote.user_feedback}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400">
+                              No user message
+                            </span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => openQuoteDialog(quote)}
+                            onClick={() =>
+                              openQuoteDialog(quote)
+                            }
                           >
                             View
                           </Button>
@@ -667,22 +816,81 @@ function DashboardContent() {
               </Table>
             ) : (
               <p className="text-sm text-muted-foreground">
-                No collaboration requests have been submitted yet.
+                No collaboration requests have been submitted
+                yet.
               </p>
             )}
           </CardContent>
         </Card>
 
-        <Dialog open={isQuoteDialogOpen} onOpenChange={handleQuoteDialogChange}>
+        <Dialog
+          open={isQuoteDialogOpen}
+          onOpenChange={handleQuoteDialogChange}
+        >
           <DialogContent className="w-full max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-hidden p-6 md:p-8">
             {selectedQuote && (
               <div className="space-y-6 overflow-y-auto pr-2 max-h-[calc(90vh-4rem)]">
-                <DialogHeader>
-                  <DialogTitle>{selectedQuote.title}</DialogTitle>
-                  <DialogDescription>
-                    Submitted {formatDate(selectedQuote.created_at)} ·{' '}
-                    {selectedQuoteBusiness?.business_name || 'Personal project'}
-                  </DialogDescription>
+                <DialogHeader className="flex flex-col items-start gap-2">
+                  <div className="flex w-full items-start justify-between gap-4">
+                    <div>
+                      <DialogTitle>
+                        {selectedQuote.title}
+                      </DialogTitle>
+                      <DialogDescription>
+                        Submitted{' '}
+                        {formatDate(selectedQuote.created_at)} ·{' '}
+                        {selectedQuoteBusiness?.business_name ||
+                          'Personal project'}
+                      </DialogDescription>
+                    </div>
+                    {/* Clickable status control in top-left area of modal header */}
+                    <div className="flex flex-col items-end gap-1">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={`px-3 py-1 text-xs font-semibold ${
+                              quoteStatusBadgeClassesLocal[
+                                selectedQuote.status
+                              ]
+                            }`}
+                            disabled={isUpdatingStatus}
+                          >
+                            {isUpdatingStatus
+                              ? 'Updating...'
+                              : statusLabel(selectedQuote.status)}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>
+                            Set quote status
+                          </DropdownMenuLabel>
+                          {allStatuses.map((status) => (
+                            <DropdownMenuItem
+                              key={status}
+                              onClick={() =>
+                                handleStatusChange(
+                                  selectedQuote.id,
+                                  status
+                                )
+                              }
+                            >
+                              {statusLabel(status)}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <p className="text-[10px] text-muted-foreground">
+                        Admin-only • any status
+                      </p>
+                      {statusError && (
+                        <p className="text-[10px] text-destructive max-w-xs text-right">
+                          {statusError}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </DialogHeader>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -696,13 +904,18 @@ function DashboardContent() {
                     <Badge
                       variant="outline"
                       className={`mt-2 ${
-                        quoteStatusBadgeClasses[selectedQuote.status] ?? ''
+                        quoteStatusBadgeClasses[
+                          selectedQuote.status
+                        ] ?? ''
                       }`}
                     >
                       {statusLabel(selectedQuote.status)}
                     </Badge>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Updated {formatDate(selectedQuote.updated_at)}
+                      Updated{' '}
+                      {formatDate(
+                        selectedQuote.updated_at
+                      )}
                     </p>
                   </div>
                   <div className="rounded-lg border p-4">
@@ -710,11 +923,13 @@ function DashboardContent() {
                       Budget
                     </p>
                     <p className="mt-1 font-semibold">
-                      {selectedQuote.budget_range || 'Not specified'}
+                      {selectedQuote.budget_range ||
+                        'Not specified'}
                     </p>
                     {selectedQuote.estimated_cost && (
                       <p className="text-sm text-muted-foreground">
-                        Estimate: {selectedQuote.currency}{' '}
+                        Estimate:{' '}
+                        {selectedQuote.currency}{' '}
                         {selectedQuote.estimated_cost}
                       </p>
                     )}
@@ -727,7 +942,8 @@ function DashboardContent() {
                       Requester
                     </p>
                     <p className="font-semibold">
-                      {selectedQuoteOwner?.full_name || '—'}
+                      {selectedQuoteOwner?.full_name ||
+                        '—'}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {selectedQuoteOwner?.email || '—'}
@@ -747,8 +963,13 @@ function DashboardContent() {
                       </p>
                     )}
                     {selectedQuoteBusiness?.business_type && (
-                      <Badge variant="outline" className="mt-2 w-fit">
-                        {selectedQuoteBusiness.business_type}
+                      <Badge
+                        variant="outline"
+                        className="mt-2 w-fit"
+                      >
+                        {
+                          selectedQuoteBusiness.business_type
+                        }
                       </Badge>
                     )}
                   </div>
@@ -769,7 +990,9 @@ function DashboardContent() {
                       Collaboration Preferences
                     </p>
                     <p className="text-sm">
-                      {selectedQuote.collaboration_preferences}
+                      {
+                        selectedQuote.collaboration_preferences
+                      }
                     </p>
                   </div>
                 )}
@@ -780,7 +1003,9 @@ function DashboardContent() {
                       Suggested Collaboration
                     </p>
                     <p className="text-sm whitespace-pre-line">
-                      {selectedQuote.suggested_collaboration}
+                      {
+                        selectedQuote.suggested_collaboration
+                      }
                     </p>
                   </div>
                 )}
@@ -802,13 +1027,20 @@ function DashboardContent() {
                       AI Suggestions
                     </p>
                     <ul className="list-disc space-y-1 pl-4 text-sm">
-                      {selectedQuoteSuggestions.map((suggestion, index) => (
-                        <li key={`suggestion-${index}`}>
-                          {typeof suggestion === 'string'
-                            ? suggestion
-                            : JSON.stringify(suggestion)}
-                        </li>
-                      ))}
+                      {selectedQuoteSuggestions.map(
+                        (suggestion, index) => (
+                          <li
+                            key={`suggestion-${index}`}
+                          >
+                            {typeof suggestion ===
+                            'string'
+                              ? suggestion
+                              : JSON.stringify(
+                                  suggestion
+                                )}
+                          </li>
+                        )
+                      )}
                     </ul>
                   </div>
                 )}
@@ -816,23 +1048,27 @@ function DashboardContent() {
                 <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
                   <div>
                     <p className="text-xs uppercase text-muted-foreground">
-                      Admin Feedback
+                      Admin Feedback to User
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      Share updates with the requester. Leave blank to remove
-                      previous feedback.
+                    <p className="text-xs text-muted-foreground">
+                      Share updates with the requester. Leave
+                      blank to remove previous feedback.
                     </p>
                   </div>
                   <Textarea
                     value={feedbackDraft}
                     onChange={(event) =>
-                      handleFeedbackDraftChange(event.target.value)
+                      handleFeedbackDraftChange(
+                        event.target.value
+                      )
                     }
                     placeholder="Let the requester know what happens next..."
                     rows={4}
                   />
                   {feedbackError && (
-                    <p className="text-sm text-destructive">{feedbackError}</p>
+                    <p className="text-sm text-destructive">
+                      {feedbackError}
+                    </p>
                   )}
                   {feedbackSuccess && (
                     <p className="text-sm text-emerald-600">
@@ -844,7 +1080,8 @@ function DashboardContent() {
                       variant="ghost"
                       onClick={() =>
                         handleFeedbackDraftChange(
-                          selectedQuote.admin_feedback ?? ''
+                          selectedQuote.admin_feedback ??
+                            ''
                         )
                       }
                       disabled={isSavingFeedback}
@@ -858,9 +1095,24 @@ function DashboardContent() {
                       {isSavingFeedback && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
-                      Save Feedback
+                      Save Admin Feedback
                     </Button>
                   </div>
+                </div>
+
+                <div className="rounded-lg border bg-background p-4 space-y-2">
+                  <p className="text-xs uppercase text-muted-foreground">
+                    User Feedback to Admin
+                  </p>
+                  {selectedQuote.user_feedback ? (
+                    <p className="text-sm whitespace-pre-wrap">
+                      {selectedQuote.user_feedback}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      The user has not left any feedback yet.
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -871,6 +1123,7 @@ function DashboardContent() {
           users={data?.profiles || []}
           businesses={data?.businesses || []}
           quotes={data?.quotes || []}
+          onQuoteView={openQuoteDialog}
         />
       </div>
     </div>
@@ -893,7 +1146,9 @@ function SummaryCard({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium">
+          {title}
+        </CardTitle>
         {icon}
       </CardHeader>
       <CardContent>
@@ -904,7 +1159,9 @@ function SummaryCard({
             value
           )}
         </div>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <p className="text-xs text-muted-foreground">
+          {description}
+        </p>
       </CardContent>
     </Card>
   );
@@ -919,17 +1176,26 @@ function LoadingTablePlaceholder({
 }) {
   return (
     <div className="space-y-2">
-      {Array.from({ length: rows }).map((_, rowIndex) => (
-        <div
-          key={rowIndex}
-          className="grid animate-pulse gap-4 rounded-md border bg-muted/30 p-4"
-          style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
-        >
-          {Array.from({ length: columns }).map((__, colIndex) => (
-            <div key={colIndex} className="h-4 rounded bg-muted" />
-          ))}
-        </div>
-      ))}
+      {Array.from({ length: rows }).map(
+        (_, rowIndex) => (
+          <div
+            key={rowIndex}
+            className="grid animate-pulse gap-4 rounded-md border bg-muted/30 p-4"
+            style={{
+              gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+            }}
+          >
+            {Array.from({ length: columns }).map(
+              (_, colIndex) => (
+                <div
+                  key={colIndex}
+                  className="h-4 rounded bg-muted"
+                />
+              )
+            )}
+          </div>
+        )
+      )}
     </div>
   );
 }
@@ -937,15 +1203,17 @@ function LoadingTablePlaceholder({
 function LoadingListPlaceholder({ rows }: { rows: number }) {
   return (
     <div className="space-y-3">
-      {Array.from({ length: rows }).map((_, index) => (
-        <div
-          key={index}
-          className="flex animate-pulse items-center justify-between rounded-lg border bg-muted/30 px-3 py-2"
-        >
-          <div className="h-4 w-32 rounded bg-muted" />
-          <div className="h-4 w-8 rounded bg-muted" />
-        </div>
-      ))}
+      {Array.from({ length: rows }).map(
+        (_, index) => (
+          <div
+            key={index}
+            className="flex animate-pulse items-center justify-between rounded-lg border bg-muted/30 px-3 py-2"
+          >
+            <div className="h-4 w-32 rounded bg-muted" />
+            <div className="h-4 w-8 rounded bg-muted" />
+          </div>
+        )
+      )}
     </div>
   );
 }

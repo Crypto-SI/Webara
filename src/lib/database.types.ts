@@ -128,7 +128,15 @@ export interface Database {
           suggested_collaboration: string | null
           ai_suggestions: Json
           admin_feedback: string | null
-          status: 'draft' | 'pending' | 'under_review' | 'accepted' | 'rejected' | 'call_requested' | 'project_created'
+          user_feedback: string | null
+          status:
+            | 'draft'
+            | 'pending'
+            | 'under_review'
+            | 'accepted'
+            | 'rejected'
+            | 'call_requested'
+            | 'project_created'
           estimated_cost: number | null
           currency: string
           created_at: string
@@ -146,7 +154,15 @@ export interface Database {
           suggested_collaboration?: string | null
           ai_suggestions?: Json
           admin_feedback?: string | null
-          status?: 'draft' | 'pending' | 'under_review' | 'accepted' | 'rejected' | 'call_requested' | 'project_created'
+          user_feedback?: string | null
+          status?:
+            | 'draft'
+            | 'pending'
+            | 'under_review'
+            | 'accepted'
+            | 'rejected'
+            | 'call_requested'
+            | 'project_created'
           estimated_cost?: number | null
           currency?: string
           created_at?: string
@@ -164,7 +180,15 @@ export interface Database {
           suggested_collaboration?: string | null
           ai_suggestions?: Json
           admin_feedback?: string | null
-          status?: 'draft' | 'pending' | 'under_review' | 'accepted' | 'rejected' | 'call_requested' | 'project_created'
+          user_feedback?: string | null
+          status?:
+            | 'draft'
+            | 'pending'
+            | 'under_review'
+            | 'accepted'
+            | 'rejected'
+            | 'call_requested'
+            | 'project_created'
           estimated_cost?: number | null
           currency?: string
           created_at?: string
@@ -175,7 +199,13 @@ export interface Database {
         Row: {
           id: string
           quote_id: string
-          activity_type: 'created' | 'updated' | 'status_changed' | 'call_requested' | 'note_added' | 'viewed'
+          activity_type:
+            | 'created'
+            | 'updated'
+            | 'status_changed'
+            | 'call_requested'
+            | 'note_added'
+            | 'viewed'
           description: string | null
           created_by: string | null
           metadata: Json
@@ -184,7 +214,13 @@ export interface Database {
         Insert: {
           id?: string
           quote_id: string
-          activity_type: 'created' | 'updated' | 'status_changed' | 'call_requested' | 'note_added' | 'viewed'
+          activity_type:
+            | 'created'
+            | 'updated'
+            | 'status_changed'
+            | 'call_requested'
+            | 'note_added'
+            | 'viewed'
           description?: string | null
           created_by?: string | null
           metadata?: Json
@@ -193,7 +229,13 @@ export interface Database {
         Update: {
           id?: string
           quote_id?: string
-          activity_type?: 'created' | 'updated' | 'status_changed' | 'call_requested' | 'note_added' | 'viewed'
+          activity_type?:
+            | 'created'
+            | 'updated'
+            | 'status_changed'
+            | 'call_requested'
+            | 'note_added'
+            | 'viewed'
           description?: string | null
           created_by?: string | null
           metadata?: Json

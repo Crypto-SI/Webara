@@ -78,9 +78,10 @@ interface UsersWithProposalsProps {
   users: ProfileRow[];
   businesses: BusinessRow[];
   quotes: QuoteRow[];
+  onQuoteView: (quote: QuoteRow) => void;
 }
 
-export function UsersWithProposals({ users, businesses, quotes }: UsersWithProposalsProps) {
+export function UsersWithProposals({ users, businesses, quotes, onQuoteView }: UsersWithProposalsProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'name' | 'created' | 'quotes'>('name');
@@ -279,6 +280,7 @@ export function UsersWithProposals({ users, businesses, quotes }: UsersWithPropo
                               <TableHead>Estimated Cost</TableHead>
                               <TableHead>Created</TableHead>
                               <TableHead>Updated</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -306,6 +308,15 @@ export function UsersWithProposals({ users, businesses, quotes }: UsersWithPropo
                                 </TableCell>
                                 <TableCell>
                                   {new Date(quote.updated_at).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => onQuoteView(quote)}
+                                  >
+                                    View Details
+                                  </Button>
                                 </TableCell>
                               </TableRow>
                             ))}
