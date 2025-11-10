@@ -1,5 +1,6 @@
-// src/app/login/page.tsx
 'use client';
+
+// src/app/login/page.tsx
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { SignIn } from '@clerk/nextjs';
@@ -11,12 +12,15 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
+// NOTE: metadata export removed because this is a client component using Clerk.
+// Define metadata in a server layout for (auth) if SEO control is needed.
+
 export default function LoginPage() {
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
+    <div className="page-shell">
       <Header />
-      <main className="flex-1 flex items-center justify-center p-6">
-        <Card className="mx-auto max-w-sm w-full">
+      <main className="page-main-centered">
+        <Card className="page-card-auth responsive-card">
           <CardHeader>
             <CardTitle className="text-2xl">Login</CardTitle>
             <CardDescription>

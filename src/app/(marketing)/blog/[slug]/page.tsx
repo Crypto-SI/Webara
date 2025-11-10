@@ -1,9 +1,68 @@
 
-// src/app/blog/[slug]/page.tsx
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { getPostBySlug, blogPosts } from '@/lib/blog-posts';
+
+// Dynamic SEO for blog posts
+export async function generateMetadata(
+ { params }: { params: { slug: string } }
+): Promise<Metadata> {
+ const post = getPostBySlug(params.slug);
+
+ if (!post) {
+   return {
+     title: 'Post Not Found | Webara Studio Blog',
+     description: 'The blog post you are looking for does not exist.',
+     robots: {
+       index: false,
+       follow: false,
+     },
+   };
+ }
+
+ const url = `https://webarastudio.com/blog/${post.slug}`;
+ const title = `${post.title} | Webara Studio Blog`;
+ const description =
+   post.summary ||
+   `Read "${post.title}" from Webara Studio on modern product development, UX, and high-performing web platforms.`;
+
+ return {
+   title,
+   description,
+   alternates: {
+     canonical: url,
+   },
+   openGraph: {
+     title,
+     description,
+     url,
+     type: 'article',
+     siteName: 'Webara Studio',
+     publishedTime: post.date,
+     authors: [post.author],
+     images: post.imageUrl
+       ? [
+           {
+             url: post.imageUrl,
+             width: 1200,
+             height: 630,
+             alt: post.title,
+           },
+         ]
+       : [],
+   },
+   twitter: {
+     card: 'summary_large_image',
+     title,
+     description,
+     images: post.imageUrl ? [post.imageUrl] : [],
+   },
+ };
+}
+
+// src/app/blog/[slug]/page.tsx
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';

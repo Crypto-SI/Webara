@@ -1,4 +1,15 @@
+import type { Metadata } from 'next';
+
 // src/app/terms-of-service/page.tsx
+export const metadata: Metadata = {
+  title: 'Terms of Service | Webara Studio',
+  description:
+    'Review the Webara Studio Terms of Service covering use of our website, AI-generated quotes, and project engagements.',
+  alternates: {
+    canonical: 'https://webarastudio.com/terms-of-service',
+  },
+};
+
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

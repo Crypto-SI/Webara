@@ -1,4 +1,22 @@
 
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+ title: 'Blog | Webara Studio Insights on Modern Web, SaaS, and Product Design',
+ description:
+   'Read Webara Studio insights on Next.js, SaaS UX, high-converting landing pages, and collaborative product development.',
+ alternates: {
+   canonical: 'https://webarastudio.com/blog',
+ },
+ openGraph: {
+   title: 'Webara Studio Blog | Insights on Modern Web & Product Design',
+   description:
+     'Expert articles on building scalable, conversion-focused digital experiences.',
+   url: 'https://webarastudio.com/blog',
+   type: 'website',
+ },
+};
+
 // src/app/blog/page.tsx
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';

@@ -219,7 +219,10 @@ export function UsersWithProposals({ users, businesses, quotes, onQuoteView }: U
             </p>
           ) : (
             usersWithBusinessAndQuotes.map(({ user, business, quotes }) => (
-              <Card key={user.user_id} className="border-l-4 border-l-blue-500">
+              <Card
+                key={user.user_id}
+                className="border-l-4 border-l-blue-500 responsive-card"
+              >
                 <Collapsible
                   open={expandedUsers.has(user.user_id)}
                   onOpenChange={() => toggleUserExpanded(user.user_id)}
@@ -271,7 +274,8 @@ export function UsersWithProposals({ users, businesses, quotes, onQuoteView }: U
                           No proposals submitted yet.
                         </p>
                       ) : (
-                        <Table>
+                        <div className="table-scroll-x">
+                          <Table>
                           <TableHeader>
                             <TableRow>
                               <TableHead>Title</TableHead>
@@ -322,6 +326,7 @@ export function UsersWithProposals({ users, businesses, quotes, onQuoteView }: U
                             ))}
                           </TableBody>
                         </Table>
+                      </div>
                       )}
                     </CardContent>
                   </CollapsibleContent>

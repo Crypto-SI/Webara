@@ -454,29 +454,30 @@ function DashboardContent() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/20 pb-12">
+    <div className="min-h-screen bg-muted/20 pb-6 sm:pb-12">
       <div className="border-b bg-background">
-        <div className="container mx-auto flex flex-col gap-4 px-4 py-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
-            <Logo className="w-fit rounded-full border border-border/70 bg-background px-4 py-2 shadow-sm transition hover:scale-105" />
+        <div className="container mx-auto flex flex-col gap-4 px-4 py-4 sm:py-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
+            <Logo className="w-fit rounded-full border border-border/70 bg-background px-3 py-1.5 shadow-sm transition hover:scale-105" />
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
                 Admin Dashboard
               </h1>
-              <p className="text-muted-foreground">
-                Monitor users, businesses, collaborations, and shared feedback
-                across the platform.
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Monitor users, businesses, collaborations, and feedback.
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Button asChild>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 justify-start md:justify-end">
+            <Button asChild size="sm" className="w-full xs:w-auto sm:w-auto">
               <Link href="/profile">Profile</Link>
             </Button>
             <Button
               variant="outline"
+              size="sm"
               onClick={loadDashboard}
               disabled={isLoading}
+              className="w-full xs:w-auto sm:w-auto"
             >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${
@@ -490,9 +491,15 @@ function DashboardContent() {
               onOpenChange={setSignOutDialogOpen}
             >
               <AlertDialogTrigger asChild>
-                <Button variant="destructive">Sign Out</Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="w-full xs:w-auto sm:w-auto"
+                >
+                  Sign Out
+                </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="dialog-responsive">
                 <AlertDialogHeader>
                   <AlertDialogTitle>
                     Sign out of your account?
@@ -524,7 +531,7 @@ function DashboardContent() {
         </div>
       </div>
 
-      <div className="container mx-auto mt-8 px-4 space-y-8">
+      <div className="container mx-auto mt-6 px-4 space-y-6">
         {error && (
           <Card className="border-destructive/40 bg-destructive/10 text-destructive">
             <CardHeader>
@@ -534,7 +541,7 @@ function DashboardContent() {
           </Card>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
           <SummaryCard
             title="Total Users"
             value={totalUsers}
@@ -573,8 +580,8 @@ function DashboardContent() {
           />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
+        <div className="grid gap-4 lg:gap-6 grid-cols-1 lg:grid-cols-3">
+          <Card className="lg:col-span-2 responsive-card">
             <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle>Users</CardTitle>
@@ -588,7 +595,7 @@ function DashboardContent() {
                 </span>
               )}
             </CardHeader>
-            <CardContent className="overflow-x-auto">
+            <CardContent className="table-scroll-x">
               {isLoading ? (
                 <LoadingTablePlaceholder rows={4} columns={5} />
               ) : (
@@ -699,7 +706,7 @@ function DashboardContent() {
               feedback in one place.
             </CardDescription>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
+          <CardContent className="table-scroll-x">
             {isLoading ? (
               <LoadingTablePlaceholder
                 rows={4}
@@ -827,7 +834,7 @@ function DashboardContent() {
           open={isQuoteDialogOpen}
           onOpenChange={handleQuoteDialogChange}
         >
-          <DialogContent className="w-full max-w-4xl lg:max-w-5xl max-h-[90vh] overflow-hidden p-6 md:p-8">
+          <DialogContent className="dialog-responsive">
             {selectedQuote && (
               <div className="space-y-6 overflow-y-auto pr-2 max-h-[calc(90vh-4rem)]">
                 <DialogHeader className="flex flex-col items-start gap-2">
@@ -893,7 +900,7 @@ function DashboardContent() {
                   </div>
                 </DialogHeader>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div className="rounded-lg border p-4">
                     <p className="text-xs uppercase text-muted-foreground">
                       Status
@@ -936,7 +943,7 @@ function DashboardContent() {
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                   <div className="rounded-lg border p-4 space-y-1">
                     <p className="text-xs uppercase text-muted-foreground">
                       Requester

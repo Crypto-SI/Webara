@@ -17,6 +17,7 @@ export function AboutSection() {
                 src={aboutImage.imageUrl}
                 alt={aboutImage.description}
                 fill
+                sizes="(max-width: 640px) 80vw, (max-width: 1024px) 40vw, 400px"
                 className="rounded-lg object-cover shadow-lg"
                 data-ai-hint={aboutImage.imageHint}
               />

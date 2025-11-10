@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Disallow non-public/internal tooling routes (avoid thin/duplicate content)
+Disallow: /api/
+Disallow: /_next/
+Disallow: /favicon/
+Disallow: /scripts/
+Disallow: /admin
+Disallow: /account
+Disallow: /profile
+Disallow: /test-
+Disallow: /internal
+
+Sitemap: https://webarastudio.com/sitemap.xml

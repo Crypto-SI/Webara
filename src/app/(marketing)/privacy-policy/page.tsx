@@ -1,4 +1,15 @@
+import type { Metadata } from 'next';
+
 // src/app/privacy-policy/page.tsx
+export const metadata: Metadata = {
+  title: 'Privacy Policy | Webara Studio',
+  description:
+    'Read the Webara Studio privacy policy to understand how we collect, use, and protect your data.',
+  alternates: {
+    canonical: 'https://webarastudio.com/privacy-policy',
+  },
+};
+
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
