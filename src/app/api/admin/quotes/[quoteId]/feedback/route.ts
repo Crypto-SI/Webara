@@ -5,11 +5,11 @@ import type { Database } from '@/lib/database.types';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { quoteId: string } }
+  context: { params: Promise<{ quoteId: string }> }
 ) {
+  const { quoteId } = await context.params;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const { quoteId } = params;
   const authResponse = await auth();
   const { userId } = authResponse;
 
@@ -82,7 +82,7 @@ export async function PATCH(
       .from('profiles')
       .select('role')
       .eq('user_id', userId)
-      .maybeSingle();
+      .maybeSingle<{ role: string | null }>();
 
     if (profileError && profileError.code !== 'PGRST116') {
       console.error('Unable to verify admin role:', profileError);
@@ -92,8 +92,8 @@ export async function PATCH(
       );
     }
 
-    if (roleRow && 'role' in roleRow) {
-      effectiveRole = (roleRow.role ?? '').toLowerCase();
+    if (roleRow?.role) {
+      effectiveRole = roleRow.role.toLowerCase();
     }
   }
 
@@ -113,7 +113,7 @@ export async function PATCH(
         normalizedFeedback && normalizedFeedback.length > 0
           ? normalizedFeedback
           : null,
-    })
+    } as never)
     .eq('id', quoteId)
     .select('*')
     .maybeSingle();

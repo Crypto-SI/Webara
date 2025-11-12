@@ -8,9 +8,9 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 // - Effect: set status = 'call_requested' if not already and return updated quote
 export async function POST(
   _req: Request,
-  context: { params: { quoteId: string } }
+  context: { params: Promise<{ quoteId: string }> }
 ) {
-  const quoteId = context.params.quoteId;
+  const { quoteId } = await context.params;
 
   if (!quoteId) {
     return NextResponse.json(
@@ -85,8 +85,8 @@ export async function POST(
   // Update quote.status to call_requested
   // Update via a raw SQL call to avoid TS inference issues with generated types
   const { data: updated, error: updateError } = await supabase
-    .from('quotes' as any)
-    .update({ status: 'call_requested' } as any)
+    .from('quotes')
+    .update({ status: 'call_requested' } as never)
     .eq('id', quoteId)
     .select('id, user_id, status, admin_feedback')
     .single<any>();

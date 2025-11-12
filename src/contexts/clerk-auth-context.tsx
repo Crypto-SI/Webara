@@ -1,7 +1,7 @@
 'use client';
 
-import { useAuth } from '@clerk/nextjs';
-import { createSupabaseClient } from '@/lib/supabase/client';
+import { useUser } from '@clerk/nextjs';
+import { useSupabaseClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
 
 interface AuthState {
@@ -11,11 +11,11 @@ interface AuthState {
 }
 
 export function useClerkSupabaseAuth() {
-  const { user, isLoaded } = useAuth();
+  const { user, isLoaded } = useUser();
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   
-  const supabase = createSupabaseClient();
+  const supabase = useSupabaseClient();
 
   useEffect(() => {
     if (!isLoaded || !user) {
@@ -24,11 +24,13 @@ export function useClerkSupabaseAuth() {
       return;
     }
 
+    const userId = user.id;
+
     async function loadProfile() {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
 
       if (error) {
@@ -40,7 +42,7 @@ export function useClerkSupabaseAuth() {
     }
 
     loadProfile();
-  }, [user, isLoaded]);
+  }, [user, isLoaded, supabase]);
 
   return {
     user,

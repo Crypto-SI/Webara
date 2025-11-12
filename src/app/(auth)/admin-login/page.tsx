@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { createSupabaseClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 export default function AdminLogin() {
-  const supabase = createSupabaseClient();
+  const supabase = useSupabaseClient();
   const [email, setEmail] = useState('cryptosi@protonmail.com');
   const [password, setPassword] = useState('Talent81');
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,7 @@ export default function AdminLogin() {
           .from('profiles')
           .select('role')
           .eq('user_id', data.user.id)
-          .single();
+          .single<{ role: string | null }>();
 
         if (profile?.role === 'admin') {
           setTimeout(() => {

@@ -1,18 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { createSupabaseClient } from '@/lib/supabase/client';
+import { useState, useEffect, useCallback } from 'react';
+import { useSupabaseClient } from '@/lib/supabase/client';
 
 export default function TestAdmin() {
   const [message, setMessage] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
-  const supabase = createSupabaseClient();
+  const supabase = useSupabaseClient();
 
-  useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  const checkAdminStatus = async () => {
+  const checkAdminStatus = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -21,7 +17,7 @@ export default function TestAdmin() {
           .from('profiles')
           .select('role, full_name')
           .eq('user_id', user.id)
-          .single();
+          .single<{ role: string | null; full_name: string | null }>();
 
         if (profile) {
           setUserRole(profile.role);
@@ -35,7 +31,11 @@ export default function TestAdmin() {
     } catch (error) {
       setMessage(`❌ Error: ${error}`);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    void checkAdminStatus();
+  }, [checkAdminStatus]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">

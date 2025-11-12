@@ -71,7 +71,7 @@ export function AboutSection() {
                   <h3 className="font-semibold">Our Approach</h3>
                   <p className="text-foreground/70">
                     We focus on partnership, transparency, and tailored
-                    solutions to ensure your project's success.
+                    solutions to ensure your project&apos;s success.
                   </p>
                 </div>
               </div>

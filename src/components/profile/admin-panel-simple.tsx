@@ -28,6 +28,7 @@ export function AdminPanelSimple({ users, businesses, quotes, isLoading }: Admin
         users={users}
         businesses={businesses}
         quotes={quotes}
+        onQuoteView={() => {}}
       />
     </div>
   );

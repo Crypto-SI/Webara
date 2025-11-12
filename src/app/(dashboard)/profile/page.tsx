@@ -171,7 +171,12 @@ function ProfileContent() {
             <Logo className="w-fit rounded-full border border-border/70 bg-background px-4 py-2 shadow-sm transition hover:scale-105" />
             <div>
               <h1 className="text-3xl font-bold tracking-tight">
-                {profile?.full_name || user?.email || 'Profile'}
+                {
+                  profile?.full_name ||
+                    (user?.unsafeMetadata as { full_name?: string } | undefined)?.full_name ||
+                    user?.emailAddresses?.[0]?.emailAddress ||
+                    'Profile'
+                }
               </h1>
               <p className="text-muted-foreground">
                 Manage your profile and view your collaboration activity.

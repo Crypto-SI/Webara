@@ -59,6 +59,7 @@ export function AdminPanel({ users, businesses, quotes, isLoading }: AdminPanelP
         users={adminData.users}
         businesses={adminData.businesses}
         quotes={adminData.quotes}
+        onQuoteView={() => {}}
       />
     </div>
   );

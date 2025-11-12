@@ -63,10 +63,10 @@ export function Header() {
           targetElement.scrollIntoView({ behavior: 'smooth' });
         } else {
           // Fallback for when element is not on the current page
-          window.location.href = href;
+          router.push(href);
         }
     } else {
-        window.location.href = href;
+        router.push(href);
     }
     setIsOpen(false);
   };
@@ -82,7 +82,7 @@ export function Header() {
           targetElement.scrollIntoView({ behavior: 'smooth' });
         } else {
           // Fallback for when element is not on the current page
-          window.location.href = href;
+          router.push(href);
         }
         setIsOpen(false);
     }

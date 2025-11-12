@@ -1,8 +1,8 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
-import { createSupabaseClient } from '@/lib/supabase/client';
+import { useUser } from '@clerk/nextjs';
+import { useSupabaseClient } from '@/lib/supabase/client';
 import type { Database } from '@/lib/database.types';
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -25,12 +25,12 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { user, isLoaded } = useAuth();
+  const { user, isLoaded } = useUser();
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   
-  const supabase = createSupabaseClient();
+  const supabase = useSupabaseClient();
 
   const loadProfile = useCallback(
     async (user: any | null) => {
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     },
-    [user, isLoaded]
+    [supabase]
   );
 
   const signUp = async (email: string, password: string, metadata?: any) => {
@@ -93,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update(updates as any)
+        .update(updates as never)
         .eq('user_id', user.id);
 
       if (error) {

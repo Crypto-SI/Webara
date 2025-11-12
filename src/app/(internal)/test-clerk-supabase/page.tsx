@@ -1,15 +1,16 @@
 'use client';
 
-import { useAuth } from '@clerk/nextjs';
-import { createSupabaseClient } from '@/lib/supabase/client';
+import { useUser } from '@clerk/nextjs';
+import { useSupabaseClient } from '@/lib/supabase/client';
+import type { Database } from '@/lib/database.types';
 import { useEffect, useState } from 'react';
 
 export default function TestClerkSupabasePage() {
-  const { user, isLoaded } = useAuth();
+  const { user, isLoaded } = useUser();
   const [result, setResult] = useState<string>('');
   const [loading, setLoading] = useState(false);
   
-  const supabase = createSupabaseClient();
+  const supabase = useSupabaseClient();
 
   const testConnection = async () => {
     setLoading(true);
@@ -27,8 +28,12 @@ export default function TestClerkSupabasePage() {
         .from('profiles')
         .insert({
           user_id: user.id,
+          clerk_user_id: user.id,
+          email: user.primaryEmailAddress?.emailAddress ||
+            user.emailAddresses?.[0]?.emailAddress ||
+            'test@example.com',
           full_name: 'Test User',
-        });
+        } as never);
 
       if (createError) {
         setResult(`Error creating profile: ${createError.message}`);
@@ -54,7 +59,8 @@ export default function TestClerkSupabasePage() {
       // Test 3: Test RLS policy
       const { data: allProfiles, error: readAllError } = await supabase
         .from('profiles')
-        .select('*');
+        .select('*')
+        .returns<Database['public']['Tables']['profiles']['Row'][]>();
 
       if (readAllError) {
         setResult(`Error reading all profiles: ${readAllError.message}`);
@@ -64,7 +70,8 @@ export default function TestClerkSupabasePage() {
         setResult(`RLS working: ${userProfiles.length === 1 ? 'PASS' : 'FAIL'}`);
       }
     } catch (error) {
-      setResult(`Test failed: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      setResult(`Test failed: ${message}`);
     } finally {
       setLoading(false);
     }

@@ -288,7 +288,7 @@ export function QuoteSection() {
               <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center gap-2">
                   <Sparkles className="text-accent" />
-                  Here's Your AI-Powered Suggestion
+                  Here&apos;s Your AI-Powered Suggestion
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   This is a preliminary estimate and suggestion. A team member

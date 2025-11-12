@@ -23,11 +23,11 @@ type PatchPayload = {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { quoteId: string } }
+  context: { params: Promise<{ quoteId: string }> }
 ) {
+  const { quoteId } = await context.params;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const { quoteId } = params;
   const authResponse = await auth();
   const { userId } = authResponse;
 
@@ -110,7 +110,7 @@ export async function PATCH(
       .from('profiles')
       .select('role')
       .eq('user_id', userId)
-      .maybeSingle();
+      .maybeSingle<{ role: string | null }>();
 
     if (profileError && profileError.code !== 'PGRST116') {
       console.error('Unable to verify admin role for status update:', profileError);
@@ -121,8 +121,8 @@ export async function PATCH(
     }
 
     // profiles.role is typed in Database, narrow explicitly to avoid 'never'
-    if (roleRow && typeof (roleRow as any).role === 'string') {
-      effectiveRole = ((roleRow as any).role || '').toLowerCase();
+    if (roleRow?.role) {
+      effectiveRole = roleRow.role.toLowerCase();
     }
   }
 
@@ -133,9 +133,9 @@ export async function PATCH(
   // Apply status update
   // Status update (runtime validation above already constrains value).
   // Cast to any to avoid local supabase-js typing issues; runtime is safe.
-  const { data: updatedQuote, error: updateError } = await (serviceClient as any)
+  const { data: updatedQuote, error: updateError } = await serviceClient
     .from('quotes')
-    .update({ status: normalizedStatus })
+    .update({ status: normalizedStatus } as never)
     .eq('id', quoteId)
     .select('*')
     .maybeSingle();

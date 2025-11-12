@@ -7,9 +7,10 @@ import { getPostBySlug, blogPosts } from '@/lib/blog-posts';
 
 // Dynamic SEO for blog posts
 export async function generateMetadata(
- { params }: { params: { slug: string } }
+ { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
- const post = getPostBySlug(params.slug);
+ const { slug } = await params;
+ const post = getPostBySlug(slug);
 
  if (!post) {
    return {
@@ -78,8 +79,13 @@ export async function generateStaticParams() {
   }));
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const post = getPostBySlug(params.slug);
+type BlogPageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+export default async function BlogPostPage({ params }: BlogPageProps) {
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
 
   if (!post) {
     notFound();

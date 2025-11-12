@@ -2,13 +2,13 @@
 'use client';
 
 import { useSimpleAuth } from '@/contexts/auth-context-simple';
-import { createSupabaseClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 export default function TestSupabasePage() {
   const { user, loading } = useSimpleAuth();
-  const supabase = createSupabaseClient();
+  const supabase = useSupabaseClient();
 
   const testConnection = async () => {
     try {
@@ -31,7 +31,16 @@ export default function TestSupabasePage() {
           <div>
             <h3 className="text-lg font-semibold">Auth Status</h3>
             <p>Loading: {loading ? 'Yes' : 'No'}</p>
-            <p>User: {user ? `${user.email} (${user.id})` : 'Not logged in'}</p>
+            <p>
+              User:{' '}
+              {user
+                ? `${
+                    user.primaryEmailAddress?.emailAddress ||
+                    user.emailAddresses?.[0]?.emailAddress ||
+                    'Unknown'
+                  } (${user.id})`
+                : 'Not logged in'}
+            </p>
           </div>
           
           <div>

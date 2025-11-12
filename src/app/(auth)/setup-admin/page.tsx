@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { createSupabaseClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import type { Database } from '@/lib/database.types';
 
 export default function SetupAdmin() {
-  const supabase = createSupabaseClient();
+  const supabase = useSupabaseClient();
   const [email, setEmail] = useState('cryptosi@protonmail.com');
   const [password, setPassword] = useState('Talent81');
   const [loading, setLoading] = useState(false);
@@ -38,13 +39,17 @@ export default function SetupAdmin() {
 
       if (authData.user) {
         // 2. Create the profile with admin role
+        const profilePayload: Database['public']['Tables']['profiles']['Insert'] = {
+          user_id: authData.user.id,
+          clerk_user_id: authData.user.id,
+          email,
+          full_name: 'Admin User',
+          role: 'admin',
+        };
+
         const { error: profileError } = await supabase
           .from('profiles')
-          .upsert({
-            user_id: authData.user.id,
-            full_name: 'Admin User',
-            role: 'admin'
-          });
+          .upsert(profilePayload as never);
 
         if (profileError) {
           setMessage(`Profile error: ${profileError.message}`);

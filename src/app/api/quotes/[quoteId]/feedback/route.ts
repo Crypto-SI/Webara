@@ -5,11 +5,11 @@ import type { Database } from '@/lib/database.types';
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { quoteId: string } }
+  context: { params: Promise<{ quoteId: string }> }
 ) {
+  const { quoteId } = await context.params;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const { quoteId } = params;
   const { userId } = await auth();
 
   if (!supabaseUrl || !serviceRoleKey) {
@@ -95,7 +95,7 @@ export async function PATCH(
         normalizedFeedback && normalizedFeedback.length > 0
           ? normalizedFeedback
           : null,
-    })
+    } as never)
     .eq('id', quoteId)
     .select('*')
     .maybeSingle<QuoteRow>();

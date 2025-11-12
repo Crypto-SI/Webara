@@ -1,12 +1,16 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: true,
+  poweredByHeader: false,
+  compress: true,
   typescript: {
-    ignoreBuildErrors: true,
+    // Enforce type safety in CI and production builds
+    ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    // Enforce linting in CI; if build-time linting is too strict, handle via a dedicated CI step
+    ignoreDuringBuilds: false,
   },
   images: {
     remotePatterns: [

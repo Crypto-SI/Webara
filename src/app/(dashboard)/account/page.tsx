@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useSimpleAuth } from '@/contexts/auth-context-simple';
-import { createSupabaseClient } from '@/lib/supabase/client';
+import { useSupabaseClient } from '@/lib/supabase/client';
 import { getMyQuotesAction, type MyQuote, type QuoteStatus } from '@/app/actions';
 import {
   Card,
@@ -94,12 +94,12 @@ function AccountPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
 
-  const supabase = createSupabaseClient();
+  const supabase = useSupabaseClient();
 
   useEffect(() => {
     async function fetchProfile() {
       if (!user) return;
-      
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -114,7 +114,7 @@ function AccountPageContent() {
     }
 
     fetchProfile();
-  }, [user]);
+  }, [user, supabase]);
 
   useEffect(() => {
     async function fetchQuotes() {
@@ -154,9 +154,14 @@ function AccountPageContent() {
         <div className="container mx-auto max-w-6xl px-4 space-y-8">
           <div className="space-y-2">
              <h1 className="text-3xl font-bold tracking-tight">
-                Welcome back, {profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'}!
+                Welcome back, {
+                  profile?.full_name ||
+                  (user?.unsafeMetadata as { full_name?: string } | undefined)?.full_name ||
+                  user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] ||
+                  'User'
+                }!
               </h1>
-             <p className="text-muted-foreground">Here's a summary of your account and recent activity.</p>
+             <p className="text-muted-foreground">Here&apos;s a summary of your account and recent activity.</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -215,7 +220,7 @@ function AccountPageContent() {
                     </div>
                   ) : (
                     <p className="text-center text-foreground/70 py-8">
-                      You don't have any saved quotes yet.
+                      You don&apos;t have any saved quotes yet.
                     </p>
                   )}
                 </CardContent>
@@ -240,7 +245,9 @@ function AccountPageContent() {
                      <Separator />
                      <div className="flex items-center gap-4">
                        <Mail className="h-5 w-5 text-muted-foreground" />
-                       <span className="font-medium">{user?.email || 'Not set'}</span>
+                       <span className="font-medium">
+                         {user?.emailAddresses?.[0]?.emailAddress || 'Not set'}
+                       </span>
                      </div>
                      <Separator />
                      <div className="flex items-center gap-4">

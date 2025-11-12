@@ -248,7 +248,7 @@ export async function proposeQuoteAction({
 
     const { data, error } = await supabase
       .from('quotes')
-      .insert(insertPayload)
+      .insert(insertPayload as never)
       .select('*')
       .single();
 

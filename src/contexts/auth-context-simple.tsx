@@ -29,7 +29,8 @@ function deriveProfile(user: UserResource | null): ProfileRow | null {
 
   const role =
     ((user.publicMetadata?.role as ProfileRow['role'] | undefined) ??
-      (user.privateMetadata?.role as ProfileRow['role'] | undefined)) || 'user';
+      (user.unsafeMetadata?.role as ProfileRow['role'] | undefined)) ||
+    'user';
 
   const createdAt =
     typeof user.createdAt === 'number'
@@ -41,15 +42,44 @@ function deriveProfile(user: UserResource | null): ProfileRow | null {
     user.emailAddresses?.[0]?.emailAddress ||
     null;
 
+  const toIsoString = (value: number | string | Date | null | undefined) => {
+    if (value === null || value === undefined) return null;
+    const dateValue =
+      typeof value === 'number' || typeof value === 'string'
+        ? new Date(value)
+        : value;
+    return Number.isNaN(dateValue.getTime()) ? null : dateValue.toISOString();
+  };
+
+  const emailVerified =
+    (user.primaryEmailAddress?.verification?.status ||
+      user.emailAddresses?.[0]?.verification?.status) === 'verified';
+
+  const clerkCreatedAt = toIsoString(user.createdAt);
+  const clerkLastSignInAt = toIsoString(user.lastSignInAt);
+
+  const nowIso = new Date().toISOString();
+
   return {
     id: user.id,
     user_id: user.id,
+    clerk_user_id: user.id,
+    email: primaryEmail || '',
+    email_verified: emailVerified,
+    first_name: user.firstName ?? null,
+    last_name: user.lastName ?? null,
     full_name: user.fullName || primaryEmail,
-    phone: null,
+    username: user.username ?? null,
+    phone: user.primaryPhoneNumber?.phoneNumber ?? null,
     avatar_url: user.imageUrl,
     role,
     created_at: createdAt,
-    updated_at: new Date().toISOString(),
+    updated_at: nowIso,
+    clerk_created_at: clerkCreatedAt,
+    clerk_last_sign_in_at: clerkLastSignInAt,
+    public_metadata: (user.publicMetadata ?? {}) as ProfileRow['public_metadata'],
+    private_metadata: null,
+    unsafe_metadata: (user.unsafeMetadata ?? {}) as ProfileRow['unsafe_metadata'],
   };
 }
 
@@ -66,7 +96,7 @@ export function SimpleAuthProvider({ children }: { children: React.ReactNode }) 
   const { session, isLoaded: isSessionLoaded } = useSession();
   const clerk = useClerk();
 
-  const profile = useMemo(() => deriveProfile(user), [user]);
+  const profile = useMemo(() => deriveProfile(user ?? null), [user]);
   const isAdmin =
     profile?.role === 'admin' || profile?.role === 'webara_staff';
 

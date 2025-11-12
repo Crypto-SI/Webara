@@ -47,7 +47,7 @@ export async function GET() {
       .from('profiles')
       .select('role')
       .eq('user_id', userId)
-      .maybeSingle();
+      .maybeSingle<{ role: string | null }>();
 
     if (profileError && profileError.code !== 'PGRST116') {
       console.error('Unable to verify admin role:', profileError);
@@ -57,7 +57,7 @@ export async function GET() {
       );
     }
 
-    if (roleRow && 'role' in roleRow) {
+    if (roleRow?.role) {
       effectiveRole = roleRow.role.toLowerCase();
     }
   }

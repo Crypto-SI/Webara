@@ -158,7 +158,7 @@ export function UserDashboard({ user, profile, businesses, quotes, isLoading }: 
         <CardContent>
           {quotes.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
-              You haven't submitted any proposals yet.
+              You haven&apos;t submitted any proposals yet.
             </p>
           ) : (
             <Table>

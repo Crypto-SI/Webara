@@ -104,10 +104,33 @@ export default function TestAuthPage() {
                 <h3 className="font-medium mb-2">User Details:</h3>
                 <div className="text-sm space-y-1">
                   <p><strong>ID:</strong> {user.id}</p>
-                  <p><strong>Email:</strong> {user.email}</p>
-                  <p><strong>Email Confirmed:</strong> {user.email_confirmed_at ? 'Yes' : 'No'}</p>
-                  <p><strong>Created:</strong> {new Date(user.created_at).toLocaleString()}</p>
-                  <p><strong>Last Sign In:</strong> {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'Never'}</p>
+                  <p>
+                    <strong>Email:</strong>{' '}
+                    {user.primaryEmailAddress?.emailAddress ||
+                      user.emailAddresses?.[0]?.emailAddress ||
+                      'Unknown'}
+                  </p>
+                  <p>
+                    <strong>Email Confirmed:</strong>{' '}
+                    {(
+                      user.primaryEmailAddress?.verification?.status ||
+                      user.emailAddresses?.[0]?.verification?.status
+                    ) === 'verified'
+                      ? 'Yes'
+                      : 'No'}
+                  </p>
+                  <p>
+                    <strong>Created:</strong>{' '}
+                    {user.createdAt
+                      ? new Date(user.createdAt).toLocaleString()
+                      : 'Unknown'}
+                  </p>
+                  <p>
+                    <strong>Last Sign In:</strong>{' '}
+                    {user.lastSignInAt
+                      ? new Date(user.lastSignInAt).toLocaleString()
+                      : 'Never'}
+                  </p>
                 </div>
               </div>
             )}
@@ -170,7 +193,7 @@ export default function TestAuthPage() {
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <h3 className="font-medium text-green-800 mb-2">✅ Protected Content</h3>
                   <p className="text-sm text-green-700">
-                    This content is only visible to authenticated users. You can see this because you're logged in.
+                    This content is only visible to authenticated users. You can see this because you&apos;re logged in.
                   </p>
                 </div>
               </ProtectedRoute>
