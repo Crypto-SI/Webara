@@ -14,6 +14,7 @@ import { QuotesCard } from './quotes-card';
 import { QuoteDialog } from './quote-dialog';
 import { useAdminOverviewData, useQuoteDialog, useSignOutFlow } from './hooks';
 import type { BusinessRow, ProfileRow, QuoteRow } from './types';
+import { WeeklyExecutionTracker } from './weekly-execution-tracker';
 
 export function AdminDashboard() {
   const { data, setData, isLoading, error, refresh } = useAdminOverviewData();
@@ -133,6 +134,18 @@ export function AdminDashboard() {
           quotes={data?.quotes || []}
           onQuoteView={quoteDialog.openQuoteDialog}
         />
+        <Card>
+          <CardHeader>
+            <CardTitle>Weekly Execution Tracker</CardTitle>
+            <CardDescription>
+              Track completion of your weekly marketing, content, YouTube, and ads tasks. This
+              panel reads and writes to the secured Supabase tables so only admins can manage it.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <WeeklyExecutionTracker />
+          </CardContent>
+        </Card>
       </div>
 
       <QuoteDialog
