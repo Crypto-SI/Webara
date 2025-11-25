@@ -8,8 +8,8 @@ import { useAnimation } from '@/contexts/animation-context';
 type LogoVariant = 'light' | 'dark';
 
 const logoByVariant: Record<LogoVariant, string> = {
-  light: '/webaralogo.png',
-  dark: '/webaralogolight.png',
+  light: '/webaralogo.webp',
+  dark: '/webaralogolight.webp',
 };
 
 export function Logo({

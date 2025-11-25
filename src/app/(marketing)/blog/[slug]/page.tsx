@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { getPostBySlug, blogPosts } from '@/lib/blog-posts';
+import React from 'react';
 
 // Dynamic SEO for blog posts
 export async function generateMetadata(
@@ -91,12 +92,36 @@ export default async function BlogPostPage({ params }: BlogPageProps) {
     notFound();
   }
 
+  const postUrl = `https://webarastudio.com/blog/${post.slug}`;
+  const blogPostingJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description:
+      post.summary ||
+      `Read "${post.title}" from Webara Studio on modern product development, UX, and high-performing web platforms.`,
+    image: post.imageUrl ? [post.imageUrl] : undefined,
+    datePublished: post.date,
+    author: {
+      '@type': 'Person',
+      name: post.author,
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': postUrl,
+    },
+  };
+
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <Header />
       <main className="flex-1 py-12 sm:py-16 md:py-20">
         <div className="container mx-auto max-w-3xl px-4">
           <article className="space-y-8">
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingJsonLd) }}
+            />
             <div className="space-y-4">
                  <Link href="/blog" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-4">
                     <ArrowLeft className="h-4 w-4" />

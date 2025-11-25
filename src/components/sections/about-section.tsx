@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Award, Target, Users } from 'lucide-react';
 
@@ -78,7 +79,7 @@ export function AboutSection() {
             </div>
             <div className="rounded-2xl bg-foreground p-6 text-background shadow-lg shadow-primary/10">
               <Image
-                src="/webaralogo.png"
+                src="/webaralogo.webp"
                 alt="Webara Studio logo"
                 width={200}
                 height={60}
@@ -90,6 +91,19 @@ export function AboutSection() {
               <p className="mt-2 text-sm text-background/70">
                 Our badge represents the balance of strategy, design, and engineering that powers every client engagement.
               </p>
+              <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
+                <Link href="/blog" className="underline hover:text-primary">
+                  Read our latest insights
+                </Link>
+                <span className="text-background/40">•</span>
+                <Link href="/#portfolio" className="underline hover:text-primary">
+                  See recent launches
+                </Link>
+                <span className="text-background/40">•</span>
+                <Link href="/#contact" className="underline hover:text-primary">
+                  Get a project quote
+                </Link>
+              </div>
             </div>
           </div>
         </div>

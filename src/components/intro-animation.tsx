@@ -25,7 +25,7 @@ export function IntroAnimation() {
         </div>
         <div className="overflow-hidden">
           <Image
-            src="/webaralogolight.png"
+            src="/webaralogolight.webp"
             alt="Webara Studio"
             width={220}
             height={60}

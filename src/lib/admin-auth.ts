@@ -81,7 +81,7 @@ async function resolveProfileRole(
       .from('profiles')
       .select('role')
       .eq(column, userId)
-      .maybeSingle();
+      .maybeSingle<{ role: string | null }>();
 
     if (error && error.code !== 'PGRST116') {
       throw error;

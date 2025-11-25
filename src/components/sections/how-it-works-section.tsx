@@ -70,27 +70,28 @@ export function HowItWorksSection() {
           </div>
           <div className="grid gap-4">
             {highlights.map((item) => (
-              <Card
-                key={item.title}
-                className="border-primary/10 bg-card/80 backdrop-blur transition-shadow hover:shadow-lg"
-              >
-                <CardHeader className="flex flex-row items-start gap-4 space-y-0">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <item.icon className="h-6 w-6" />
-                  </div>
-                  <div className="space-y-1">
-                    <CardTitle className="text-xl">{item.title}</CardTitle>
-                    <Badge variant="outline" className="text-xs uppercase">
-                      {item.badge}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-foreground/70">
-                    {item.description}
-                  </p>
-                </CardContent>
-              </Card>
+              <article key={item.title} className="h-full">
+                <Card className="h-full border-primary/10 bg-card/80 backdrop-blur transition-shadow hover:shadow-lg">
+                  <CardHeader className="flex flex-row items-start gap-4 space-y-0">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <item.icon className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <CardTitle className="text-xl font-semibold leading-tight">
+                        {item.title}
+                      </CardTitle>
+                      <Badge variant="outline" className="text-xs uppercase">
+                        {item.badge}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-foreground/70">
+                      {item.description}
+                    </p>
+                  </CardContent>
+                </Card>
+              </article>
             ))}
           </div>
         </div>

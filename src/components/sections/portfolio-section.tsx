@@ -26,8 +26,8 @@ const projects: PortfolioProject[] = [
     link: 'https://affilliasports.com',
     tags: ['Sports Agency', 'Brand Experience', 'Responsive Web'],
     images: [
-      { src: '/aff1.png', alt: 'Affillia Sports homepage hero' },
-      { src: '/aff2.png', alt: 'Affillia Sports services layout' },
+      { src: '/aff1.webp', alt: 'Affillia Sports homepage hero' },
+      { src: '/aff2.webp', alt: 'Affillia Sports services layout' },
     ],
   },
   {
@@ -37,8 +37,8 @@ const projects: PortfolioProject[] = [
     link: 'https://bidify.me',
     tags: ['NFT Marketplace', 'Product Design', 'Orange Gradient UI'],
     images: [
-      { src: '/bid1.png', alt: 'Bidify landing page' },
-      { src: '/bid2.png', alt: 'Bidify feature highlights' },
+      { src: '/bid1.webp', alt: 'Bidify landing page' },
+      { src: '/bid2.webp', alt: 'Bidify feature highlights' },
     ],
   },
   {
@@ -48,8 +48,8 @@ const projects: PortfolioProject[] = [
     link: 'https://cryptowaffle.fun',
     tags: ['Podcast Platform', 'Brand Identity', 'Audio Streaming UX'],
     images: [
-      { src: '/waf1.png', alt: 'Crypto Waffle podcast overview' },
-      { src: '/waf2.png', alt: 'Crypto Waffle episode detail' },
+      { src: '/waf1.webp', alt: 'Crypto Waffle podcast overview' },
+      { src: '/waf2.webp', alt: 'Crypto Waffle episode detail' },
     ],
   },
   {
@@ -59,8 +59,8 @@ const projects: PortfolioProject[] = [
     link: 'https://afroballconnect.com',
     tags: ['Sports Streaming', 'Savanna Theme', 'OTT Experience'],
     images: [
-      { src: '/afr1.png', alt: 'AfroBall Connect landing page' },
-      { src: '/afr2.png', alt: 'AfroBall Connect platform features' },
+      { src: '/afr1.webp', alt: 'AfroBall Connect landing page' },
+      { src: '/afr2.webp', alt: 'AfroBall Connect platform features' },
     ],
   },
 ];
@@ -131,6 +131,9 @@ export function PortfolioSection() {
           <p className="mx-auto max-w-[700px] text-foreground/80 md:text-xl">
             Explore a cross-section of platforms built for sport, Web3, media,
             and streaming—each tailored to its audience and growth goals.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Want the backstory? <Link href="/blog" className="underline hover:text-primary">Read our build breakdowns</Link> or <Link href="/#contact" className="underline hover:text-primary">start a project</Link>.
           </p>
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:gap-8">

@@ -8,11 +8,18 @@ import { AppProviders } from './providers';
 export const metadata: Metadata = {
   metadataBase: new URL('https://webarastudio.com'),
   title: {
-    default: 'Webara Studio | Collaborative Digital Product Studio',
+    default: 'Webara Studio | SaaS & B2B Product Partner',
     template: '%s | Webara Studio',
   },
   description:
-    'Webara Studio partners with ambitious teams to co-create high-converting websites and digital products with transparent pricing, shared innovation, and enterprise-level quality.',
+    'Webara Studio co-builds SaaS and B2B products with transparent retainers, shared IP, and enterprise delivery—launch faster with a partner who ships.',
+  alternates: {
+    canonical: 'https://webarastudio.com',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   keywords: [
     'Webara Studio',
     'web development agency',
@@ -29,11 +36,17 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     url: 'https://webarastudio.com',
-    title: 'Webara Studio | Collaborative Digital Product Studio',
+    title: 'Webara Studio | SaaS & B2B Product Partner',
     description:
       'Co-create modern, performant web apps and marketing sites. Transparent retainers, shared IP, and results-focused builds.',
     siteName: 'Webara Studio',
     images: [
+      {
+        url: '/webarabadge.webp',
+        width: 1200,
+        height: 630,
+        alt: 'Webara Studio - Collaborative Digital Product Studio',
+      },
       {
         url: '/webarabadge.png',
         width: 800,
@@ -44,7 +57,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Webara Studio | Collaborative Digital Product Studio',
+    title: 'Webara Studio | SaaS & B2B Product Partner',
     description:
       'Webara Studio builds high-converting, performant web experiences in partnership with your team.',
     images: ['/webarabadge.png'],

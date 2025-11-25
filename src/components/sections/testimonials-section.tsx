@@ -85,7 +85,9 @@ export function TestimonialsSection() {
                           &ldquo;{testimonial.quote}&rdquo;
                         </blockquote>
                         <div className="mt-6">
-                          <p className="font-semibold">{testimonial.name}</p>
+                          <h3 className="font-semibold text-lg">
+                            {testimonial.name}
+                          </h3>
                           <p className="text-sm text-primary">
                             {testimonial.title}
                           </p>

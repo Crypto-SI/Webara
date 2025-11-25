@@ -21,10 +21,14 @@ const organizationJsonLd = {
   '@type': 'Organization',
   name: 'Webara Studio',
   url: 'https://webarastudio.com',
-  logo: 'https://webarastudio.com/webaralogo.png',
-  sameAs: [
-    'https://www.linkedin.com', // TODO: replace with real profile URL
-    'https://x.com',            // TODO: replace with real profile URL
+  logo: 'https://webarastudio.com/webaralogo.webp',
+  contactPoint: [
+    {
+      '@type': 'ContactPoint',
+      contactType: 'customer support',
+      email: 'info@webarastudio.com',
+      availableLanguage: ['en'],
+    },
   ],
 };
 
@@ -42,11 +46,7 @@ export default function Home() {
       <div className="page-shell">
         <Header />
         <main className="page-main">
-          {/* Ensure semantic H1 in hero for SEO */}
-          <section className="section-px" aria-labelledby="webaru-hero-heading">
-            <h1 id="webaru-hero-heading" className="sr-only">
-              Webara Studio — Collaborative Digital Product Studio
-            </h1>
+          <section className="section-px">
             <HeroSection />
           </section>
           <section className="section-px">
