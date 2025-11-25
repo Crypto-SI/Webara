@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Header } from '@/components/layout/header';
+import { MarketingHeader } from '@/components/layout/marketing-header';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -61,7 +61,7 @@ const tiers = [
 export default function PricingPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <Header />
+      <MarketingHeader />
       <main className="flex-1 py-14 sm:py-16 md:py-20">
         <div className="container mx-auto max-w-6xl px-4 md:px-6 space-y-14">
           <section className="text-center space-y-4">

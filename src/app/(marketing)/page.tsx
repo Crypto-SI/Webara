@@ -1,16 +1,45 @@
 'use client';
 
 // src/app/page.tsx
-import { Header } from '@/components/layout/header';
+import { MarketingHeader } from '@/components/layout/marketing-header';
 import { HeroSection } from '@/components/sections/hero-section';
 import { HowItWorksSection } from '@/components/sections/how-it-works-section';
 import { PortfolioSection } from '@/components/sections/portfolio-section';
 import { AboutSection } from '@/components/sections/about-section';
-import { TestimonialsSection } from '@/components/sections/testimonials-section';
-import { QuoteSection } from '@/components/sections/quote-section';
+import dynamic from 'next/dynamic';
 import { Footer } from '@/components/layout/footer';
 import { IntroAnimation } from '@/components/intro-animation';
 import { useAnimation } from '@/contexts/animation-context';
+
+const TestimonialsSection = dynamic(
+  () =>
+    import('@/components/sections/testimonials-section').then(
+      (mod) => mod.TestimonialsSection
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+        Loading testimonials…
+      </div>
+    ),
+  }
+);
+
+const QuoteSection = dynamic(
+  () =>
+    import('@/components/sections/quote-section').then(
+      (mod) => mod.QuoteSection
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
+        Loading quote form…
+      </div>
+    ),
+  }
+);
 
 // NOTE: metadata export removed because this is now a client component.
 // Move SEO metadata into a server layout (e.g. src/app/(marketing)/layout.tsx) instead.
@@ -44,7 +73,7 @@ export default function Home() {
       />
       {isAnimationVisible && <IntroAnimation />}
       <div className="page-shell">
-        <Header />
+        <MarketingHeader />
         <main className="page-main">
           <section className="section-px">
             <HeroSection />

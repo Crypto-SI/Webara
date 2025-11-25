@@ -1,9 +1,15 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
-import { ClerkProvider } from '@clerk/nextjs';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { AppProviders } from './providers';
+import { Poppins } from 'next/font/google';
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
+  display: 'swap',
+  variable: '--font-body',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://webarastudio.com'),
@@ -47,12 +53,6 @@ export const metadata: Metadata = {
         height: 630,
         alt: 'Webara Studio - Collaborative Digital Product Studio',
       },
-      {
-        url: '/webarabadge.png',
-        width: 800,
-        height: 420,
-        alt: 'Webara Studio - Collaborative Digital Product Studio',
-      },
     ],
   },
   twitter: {
@@ -60,11 +60,11 @@ export const metadata: Metadata = {
     title: 'Webara Studio | SaaS & B2B Product Partner',
     description:
       'Webara Studio builds high-converting, performant web experiences in partnership with your team.',
-    images: ['/webarabadge.png'],
+    images: ['/webarabadge.webp'],
   },
   icons: {
     icon: [
-      { url: '/W.png', sizes: 'any', type: 'image/png' },
+      { url: '/W.webp', sizes: 'any', type: 'image/webp' },
       { url: '/favicon/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
       { url: '/favicon/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
       { url: '/favicon/favicon.ico', rel: 'shortcut icon' },
@@ -87,25 +87,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" className="!scroll-smooth">
-        <head>
-          <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link
-            rel="preconnect"
-            href="https://fonts.gstatic.com"
-            crossOrigin="anonymous"
-          />
-          <link
-            href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
-            rel="stylesheet"
-          />
-        </head>
-        <body className="font-body antialiased">
-          <AppProviders>{children}</AppProviders>
-          <Toaster />
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" className={`!scroll-smooth ${poppins.variable}`}>
+      <head />
+      <body className={`font-body antialiased ${poppins.className}`}>
+        {children}
+        <Toaster />
+      </body>
+    </html>
   );
 }

@@ -67,8 +67,8 @@ export function TestimonialsSection() {
               return (
                 <CarouselItem key={testimonial.id}>
                   <div className="p-1">
-                    <Card className="overflow-hidden">
-                      <CardContent className="flex flex-col items-center justify-center p-8 md:p-12 text-center">
+                    <Card className="overflow-hidden min-h-[360px]">
+                      <CardContent className="flex h-full flex-col items-center justify-center p-8 md:p-12 text-center">
                         <div className="mb-4">
                           {image && (
                             <Image

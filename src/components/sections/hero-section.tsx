@@ -56,6 +56,9 @@ export function HeroSection() {
                 width={1200}
                 height={800}
                 sizes="(min-width: 1024px) 50vw, 90vw"
+                fetchPriority="high"
+                placeholder="blur"
+                blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Crect width='10' height='6' fill='%230a0a0a'/%3E%3C/svg%3E"
                 className="object-cover"
                 data-ai-hint={heroImage.imageHint}
                 priority

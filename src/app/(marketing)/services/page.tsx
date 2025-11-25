@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Header } from '@/components/layout/header';
+import { MarketingHeader } from '@/components/layout/marketing-header';
 import { Footer } from '@/components/layout/footer';
 import Link from 'next/link';
 import { Check, Rocket, ShieldCheck, Sparkles } from 'lucide-react';
@@ -55,7 +55,7 @@ const services = [
 export default function ServicesPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <Header />
+      <MarketingHeader />
       <main className="flex-1 py-14 sm:py-16 md:py-20">
         <div className="container mx-auto max-w-6xl px-4 md:px-6 space-y-16">
           <section className="text-center space-y-6">

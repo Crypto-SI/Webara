@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 };
 
 // src/app/blog/page.tsx
-import { Header } from '@/components/layout/header';
+import { MarketingHeader } from '@/components/layout/marketing-header';
 import { Footer } from '@/components/layout/footer';
 import { blogPosts, type BlogPost } from '@/lib/blog-posts';
 import Image from 'next/image';
@@ -31,7 +31,7 @@ import { Badge } from '@/components/ui/badge';
 export default function BlogPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <Header />
+      <MarketingHeader />
       <main className="flex-1 py-12 sm:py-16 md:py-20">
         <div className="container mx-auto max-w-5xl px-4">
           <div className="text-center mb-12">

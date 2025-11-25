@@ -16,7 +16,7 @@ export function IntroAnimation() {
       <div className="flex items-center gap-5">
         <div className="animate-spin-slow rounded-full bg-primary/10 p-3 shadow-lg shadow-primary/30">
           <Image
-            src="/webarabadgelight.png"
+            src="/webarabadgelight.webp"
             alt="Webara badge"
             width={64}
             height={64}

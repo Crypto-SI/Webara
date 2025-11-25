@@ -10,14 +10,14 @@ export const metadata: Metadata = {
   },
 };
 
-import { Header } from '@/components/layout/header';
+import { MarketingHeader } from '@/components/layout/marketing-header';
 import { Footer } from '@/components/layout/footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function PrivacyPolicyPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <Header />
+      <MarketingHeader />
       <main className="flex-1 py-12 sm:py-16 md:py-20">
         <div className="container mx-auto max-w-4xl px-4">
           <Card>

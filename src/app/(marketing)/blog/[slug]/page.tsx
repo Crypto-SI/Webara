@@ -1,7 +1,7 @@
 
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { Header } from '@/components/layout/header';
+import { MarketingHeader } from '@/components/layout/marketing-header';
 import { Footer } from '@/components/layout/footer';
 import { getPostBySlug, blogPosts } from '@/lib/blog-posts';
 import React from 'react';
@@ -114,7 +114,7 @@ export default async function BlogPostPage({ params }: BlogPageProps) {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <Header />
+      <MarketingHeader />
       <main className="flex-1 py-12 sm:py-16 md:py-20">
         <div className="container mx-auto max-w-3xl px-4">
           <article className="space-y-8">

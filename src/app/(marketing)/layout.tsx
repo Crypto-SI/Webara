@@ -1,6 +1,7 @@
 // src/app/(marketing)/layout.tsx
 import type { Metadata } from 'next';
 import React from 'react';
+import { MarketingProviders } from './providers';
 
 const siteUrl = 'https://webarastudio.com';
 
@@ -66,12 +67,6 @@ export const metadata: Metadata = {
         height: 630,
         alt: 'Webara Studio — SaaS & B2B Product Partner',
       },
-      {
-        url: '/webarabadge.png',
-        width: 800,
-        height: 420,
-        alt: 'Webara Studio — SaaS & B2B Product Partner',
-      },
     ],
   },
   twitter: {
@@ -79,7 +74,7 @@ export const metadata: Metadata = {
     title: 'Webara Studio | SaaS & B2B Product Partner',
     description:
       'Webara Studio builds high-converting, performant web experiences in partnership with your team.',
-    images: ['/webarabadge.png'],
+    images: ['/webarabadge.webp'],
   },
 };
 
@@ -104,9 +99,9 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <MarketingProviders>
       <StructuredData />
       {children}
-    </>
+    </MarketingProviders>
   );
 }
