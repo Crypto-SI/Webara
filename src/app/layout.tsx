@@ -1,7 +1,9 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next';
 import './globals.css';
+import { ClerkProvider } from '@clerk/nextjs';
 import { Toaster } from '@/components/ui/toaster';
+import { AppProviders } from './providers';
 import { Poppins } from 'next/font/google';
 
 const poppins = Poppins({
@@ -87,12 +89,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`!scroll-smooth ${poppins.variable}`}>
-      <head />
-      <body className={`font-body antialiased ${poppins.className}`}>
-        {children}
-        <Toaster />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={`!scroll-smooth ${poppins.variable}`}>
+        <head />
+        <body className={`font-body antialiased ${poppins.className}`}>
+          <AppProviders>{children}</AppProviders>
+          <Toaster />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
