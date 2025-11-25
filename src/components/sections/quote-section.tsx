@@ -4,7 +4,6 @@ import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useUser } from '@clerk/nextjs';
 import { QuoteFormSchema, type QuoteFormValues } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,7 +50,8 @@ export function QuoteSection() {
   const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { isSignedIn } = useUser();
+  // Marketing page runs without Clerk; treat users as signed-out in this context.
+  const isSignedIn = false;
 
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(QuoteFormSchema),
