@@ -49,13 +49,13 @@ export function HeroSection() {
         </div>
         <div className="group flex items-center justify-center">
           {heroImage && (
-            <div className="relative w-full max-w-lg overflow-hidden rounded-lg shadow-2xl transition-transform duration-300 group-hover:rotate-0 lg:-rotate-3">
+            <div className="relative w-full max-w-lg overflow-hidden rounded-lg shadow-2xl transition-transform duration-300 group-hover:rotate-0 lg:-rotate-3 aspect-[4/3] sm:aspect-[16/11]">
               <Image
                 src={heroImage.imageUrl}
                 alt={heroImage.description}
                 width={1200}
-                height={800}
-                sizes="(min-width: 1024px) 50vw, 90vw"
+                height={825}
+                sizes="(min-width: 1280px) 42vw, (min-width: 1024px) 48vw, 92vw"
                 fetchPriority="high"
                 placeholder="blur"
                 blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Crect width='10' height='6' fill='%230a0a0a'/%3E%3C/svg%3E"

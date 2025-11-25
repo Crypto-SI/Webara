@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
     --background: 200 25% 15%;
@@ -68,6 +64,7 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body), system-ui, -apple-system, sans-serif;
   }
 
   /* Improve mobile scrolling + safe area */

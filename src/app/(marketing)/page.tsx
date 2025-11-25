@@ -2,13 +2,12 @@
 
 // src/app/page.tsx
 import { MarketingHeader } from '@/components/layout/marketing-header';
+import dynamic from 'next/dynamic';
 import { HeroSection } from '@/components/sections/hero-section';
 import { HowItWorksSection } from '@/components/sections/how-it-works-section';
 import { PortfolioSection } from '@/components/sections/portfolio-section';
 import { AboutSection } from '@/components/sections/about-section';
-import dynamic from 'next/dynamic';
 import { Footer } from '@/components/layout/footer';
-import { IntroAnimation } from '@/components/intro-animation';
 import { useAnimation } from '@/contexts/animation-context';
 
 const TestimonialsSection = dynamic(
@@ -39,6 +38,12 @@ const QuoteSection = dynamic(
       </div>
     ),
   }
+);
+
+const IntroAnimation = dynamic(
+  () =>
+    import('@/components/intro-animation').then((mod) => mod.IntroAnimation),
+  { ssr: false }
 );
 
 // NOTE: metadata export removed because this is now a client component.
