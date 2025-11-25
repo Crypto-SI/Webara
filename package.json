@@ -10,7 +10,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "sync:clerk": "tsx scripts/sync-clerk-users.ts"
+    "sync:clerk": "tsx scripts/sync-clerk-users.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.34.5",
@@ -68,15 +70,21 @@
   },
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.14",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "9.39.1",
     "eslint-config-next": "16.0.1",
     "genkit-cli": "^1.14.1",
+    "jsdom": "^27.2.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.20.6",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.14"
   }
 }

@@ -11,11 +11,19 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
 
 // NOTE: metadata export removed because this is a client component using Clerk.
 // Define metadata in a server layout for (auth) if SEO control is needed.
 
 export default function SignupPage() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+    console.log('SignupPage: Component mounted on client');
+  }, []);
+
   return (
     <div className="page-shell">
       <Header />
@@ -28,7 +36,11 @@ export default function SignupPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <SignUp routing="hash" />
+            {isClient ? (
+              <SignUp routing="hash" />
+            ) : (
+              <div className="w-full h-32 bg-gray-100 animate-pulse rounded-lg" />
+            )}
           </CardContent>
         </Card>
       </main>

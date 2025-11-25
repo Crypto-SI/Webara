@@ -1,7 +1,6 @@
 // src/app/(marketing)/layout.tsx
 import type { Metadata } from 'next';
 import React from 'react';
-import { MarketingProviders } from './providers';
 
 const siteUrl = 'https://webarastudio.com';
 
@@ -99,9 +98,9 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <MarketingProviders>
+    <>
       <StructuredData />
       {children}
-    </MarketingProviders>
+    </>
   );
 }
