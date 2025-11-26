@@ -84,14 +84,14 @@ export function HeroSection() {
                   Trusted Studio
                 </span>
               </div>
-              <div className="pointer-events-none absolute top-4 right-6 flex h-24 w-24 flex-col items-center justify-center rounded-full bg-accent text-background text-center shadow-2xl shadow-accent/40 ring-4 ring-background/80">
-                <span className="text-[9px] font-semibold uppercase tracking-[0.15em]">
+              <div className="pointer-events-none absolute top-4 right-6 flex h-24 w-24 flex-col items-center justify-center rounded-full bg-accent text-white text-center shadow-2xl shadow-accent/40 ring-4 ring-background/80">
+                <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white">
                   Up To
                 </span>
-                <span className="text-2xl font-extrabold leading-none">
+                <span className="text-2xl font-extrabold leading-none text-white">
                   100%
                 </span>
-                <span className="text-[9px] font-semibold uppercase tracking-[0.15em]">
+                <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white">
                   Off Builds
                 </span>
               </div>

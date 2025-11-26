@@ -39,6 +39,8 @@ export function Logo({
         alt="Webara Studio"
         width={160}
         height={42}
+        sizes="160px"
+        priority
         className="h-8 w-auto md:h-10"
       />
     </Link>

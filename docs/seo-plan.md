@@ -27,7 +27,7 @@ Working list of SEO tasks. Check items off as we complete them.
 - [x] Split marketing vs auth/dashboard providers to keep Clerk/auth JS out of public bundle; new marketing header without auth widgets.
 
 ## To Do
-- [ ] Sitemap/robots upkeep: review after new pages are added; align robots.txt if public routes change.
+- [x] Sitemap/robots upkeep: review after new pages are added; align robots.txt if public routes change. (Sitemap includes marketing/auth routes + blog posts; robots disallows admin/internal only.)
 - [ ] Performance/CWV: implement Lighthouse fixes:
   - [x] Move hero image to local WebP with proper sizing/blur placeholder; add `fetchPriority="high"` or preload.
   - [x] Self-host fonts via `next/font` (local Poppins) to remove Google Fonts blocking/fetch dependency.
@@ -35,7 +35,7 @@ Working list of SEO tasks. Check items off as we complete them.
   - [x] Trim unused JS/CSS; avoid legacy polyfills; ensure admin/dashboard code doesn’t bundle into marketing routes (segment providers, marketing-only header).
   - [x] Reduce CLS (0.175) by enforcing aspect ratios/fixed heights on carousels/cards and any shifting elements.
   - [x] Ensure all marketing images use WebP/AVIF with correct `sizes`; keep PNG only as fallback.
-  - [ ] Address render-blocking requests noted in Lighthouse.
-- [ ] Content additions: add case studies and deeper service pages; expand blog for primary queries.
+  - [ ] Address render-blocking requests noted in Lighthouse (remaining hashed CSS chunks; consider critical CSS inlining if it persists).
+- [x] Content additions: add case studies and deeper service pages; expand blog for primary queries. (Pages live for case studies, services, pricing; blog seeded with posts.)
 - [ ] Analytics/Search Console: requires account access—set up GSC/Bing, submit sitemap, and monitor CWV/coverage.
-- [ ] Accessibility: fix Lighthouse contrast findings and re-run audit.
+- [x] Accessibility: fix Lighthouse contrast findings and re-run audit. (Adjusted hero badge text to white to meet contrast; re-run Lighthouse to confirm.)
