@@ -15,6 +15,7 @@ import { QuoteDialog } from './quote-dialog';
 import { useAdminOverviewData, useQuoteDialog, useSignOutFlow } from './hooks';
 import type { BusinessRow, ProfileRow, QuoteRow } from './types';
 import { WeeklyExecutionTracker } from './weekly-execution-tracker';
+import { ClerkSyncPanel } from '@/components/admin/clerk-sync-panel';
 
 export function AdminDashboard() {
   const { data, setData, isLoading, error, refresh } = useAdminOverviewData();
@@ -146,6 +147,8 @@ export function AdminDashboard() {
             <WeeklyExecutionTracker />
           </CardContent>
         </Card>
+
+        <ClerkSyncPanel />
       </div>
 
       <QuoteDialog

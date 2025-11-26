@@ -1,7 +1,7 @@
 
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient, type User } from '@clerk/nextjs/server';
 import {
   provideAiPoweredQuote,
   type QuoteOutput,
@@ -14,10 +14,18 @@ import { generateTts, type TtsOutput } from '@/ai/flows/generate-tts';
 import { QuoteFormSchema, type QuoteFormValues } from '@/lib/types';
 import type { BlogPost } from '@/lib/blog-posts';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import type { Database } from '@/lib/database.types';
+import type { Database, Json } from '@/lib/database.types';
 
 type QuoteRow = Database['public']['Tables']['quotes']['Row'];
 type QuoteInsert = Database['public']['Tables']['quotes']['Insert'];
+type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
+type ClerkUser = User;
+type MinimalClerkClient = {
+  users: {
+    getUser: (id: string) => Promise<User>;
+    getUserList: (params: { limit?: number; offset?: number }) => Promise<{ data: User[] }>;
+  };
+};
 
 export type AiQuoteAndSuggestions = QuoteOutput &
   CollaborationSuggestionsOutput;
@@ -108,6 +116,83 @@ function inferCurrencyFromText(text?: string | null): string | null {
   if (lower.includes('inr') || lower.includes('₹')) return 'INR';
   if (lower.includes('usd') || lower.includes('$')) return 'USD';
   return null;
+}
+
+function isAdminRole(role?: string | null): boolean {
+  if (!role) return false;
+  const normalized = role.toString().toLowerCase();
+  return normalized === 'admin' || normalized === 'webara_staff';
+}
+
+async function getClerkClient(): Promise<MinimalClerkClient> {
+  const maybeClient = clerkClient as unknown;
+  if (typeof maybeClient === 'function') {
+    // Some Clerk setups expose a function that resolves to the client.
+    return (await (maybeClient as () => Promise<MinimalClerkClient>)()) as MinimalClerkClient;
+  }
+  return maybeClient as MinimalClerkClient;
+}
+
+function normalizeRole(role?: string | null): ProfileInsert['role'] {
+  if (!role) return 'user';
+  const normalized = role.toString().toLowerCase();
+  if (normalized === 'admin') return 'admin';
+  if (normalized === 'webara_staff') return 'webara_staff';
+  return 'user';
+}
+
+function mapClerkUserToProfileInsert(user: ClerkUser): ProfileInsert {
+  const primaryEmail = user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId);
+  return {
+    id: user.id,
+    user_id: user.id,
+    email: primaryEmail?.emailAddress ?? '',
+    full_name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || null,
+    first_name: user.firstName ?? null,
+    last_name: user.lastName ?? null,
+    avatar_url: user.imageUrl ?? null,
+    role: normalizeRole(user.publicMetadata?.role as string | undefined),
+    email_verified: primaryEmail?.verification?.status === 'verified',
+    clerk_created_at: user.createdAt ? new Date(user.createdAt).toISOString() : null,
+    clerk_last_sign_in_at: user.lastSignInAt ? new Date(user.lastSignInAt).toISOString() : null,
+    public_metadata: (user.publicMetadata ?? {}) as Json,
+    private_metadata: (user.privateMetadata ?? {}) as Json,
+    unsafe_metadata: (user.unsafeMetadata ?? {}) as Json,
+    clerk_user_id: user.id,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+async function requireAdminUser() {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error('Unauthorized');
+  }
+
+  const client = await getClerkClient();
+  const user = await client.users.getUser(userId);
+  const appRole = (user.publicMetadata?.role as string | undefined) ?? null;
+  const unsafeRole = (user.unsafeMetadata?.role as string | undefined) ?? null;
+
+  if (!isAdminRole(appRole) && !isAdminRole(unsafeRole)) {
+    throw new Error('Forbidden');
+  }
+}
+
+async function fetchAllClerkUsers(limit = 100): Promise<ClerkUser[]> {
+  const allUsers: ClerkUser[] = [];
+  let offset = 0;
+
+  // Paginate until we get fewer than the requested limit.
+  const client = await getClerkClient();
+  while (true) {
+    const page = await client.users.getUserList({ limit, offset });
+    allUsers.push(...page.data);
+    if (page.data.length < limit) break;
+    offset += limit;
+  }
+
+  return allUsers;
 }
 
 function deriveProjectTitle(
@@ -338,6 +423,141 @@ export async function getQuoteDetailsAction(id: string): Promise<{
       success: false,
       data: null,
       error: 'Unable to load this quote. Please try again later.',
+    };
+  }
+}
+
+// Clerk user sync actions
+export async function syncClerkUser(userId: string): Promise<{
+  success: boolean;
+  data: any;
+  error: string | null;
+}> {
+  try {
+    await requireAdminUser();
+
+    const client = await getClerkClient();
+    // Fetch user from Clerk
+    const user = await client.users.getUser(userId);
+    const profilePayload = mapClerkUserToProfileInsert(user);
+
+    // Create Supabase client with service role key
+    const supabase = createServerSupabaseClient();
+
+    // Upsert into Supabase profiles table
+    const { data, error } = await (supabase
+      .from('profiles') as any)
+      // Type cast to accommodate slight typing mismatch between Clerk metadata and our Supabase types.
+      .upsert(profilePayload as ProfileInsert)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase upsert error:', error);
+      throw new Error(error.message);
+    }
+
+    return { success: true, data, error: null };
+  } catch (error) {
+    console.error('Failed to sync Clerk user:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+}
+
+export async function syncAllClerkUsers(): Promise<{
+  success: boolean;
+  data: any;
+  error: string | null;
+}> {
+  try {
+    await requireAdminUser();
+
+    // Fetch all Clerk users (paginate to cover large tenants)
+    const users = await fetchAllClerkUsers(100);
+    
+    // Create Supabase client with service role key
+    const supabase = createServerSupabaseClient();
+
+    // Transform Clerk users to profiles format
+    const profiles = users.map(mapClerkUserToProfileInsert);
+
+    // Bulk upsert into Supabase
+    const { data, error } = await (supabase
+      .from('profiles') as any)
+      .upsert(profiles as ProfileInsert[], { onConflict: 'id' })
+      .select();
+
+    if (error) {
+      console.error('Supabase bulk upsert error:', error);
+      throw new Error(error.message);
+    }
+
+    return {
+      success: true,
+      data: {
+        synced: profiles.length,
+        users: data
+      },
+      error: null
+    };
+  } catch (error) {
+    console.error('Failed to sync all Clerk users:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+}
+
+export async function getClerkUsersNotInProfiles(): Promise<{
+  success: boolean;
+  data: any[];
+  error: string | null;
+}> {
+  try {
+    await requireAdminUser();
+
+    // Fetch all Clerk users (paginate)
+    const clerkUsers = await fetchAllClerkUsers(100);
+    
+    // Create Supabase client
+    const supabase = createServerSupabaseClient();
+    
+    // Get all existing user IDs from profiles
+    const { data: existingProfiles, error: profileError } = await (supabase
+      .from('profiles') as any).select('user_id');
+    
+    if (profileError) {
+      throw new Error(profileError.message);
+    }
+    
+    const existingUserIds = new Set(
+      (existingProfiles as { user_id: string }[] | null)?.map((p) => p.user_id) || []
+    );
+    
+    // Find Clerk users not in profiles
+    const missingUsers = clerkUsers.filter(user => !existingUserIds.has(user.id));
+    
+    return {
+      success: true,
+      data: missingUsers.map(user => ({
+        id: user.id,
+        email: user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress,
+        name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Unknown',
+      })),
+      error: null
+    };
+  } catch (error) {
+    console.error('Failed to get missing Clerk users:', error);
+    return {
+      success: false,
+      data: [],
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
     };
   }
 }

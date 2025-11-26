@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
+import { useSimpleAuth } from '@/contexts/auth-context-simple';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -10,6 +11,7 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 export function InstallPwaButton() {
+  const { loading, isAdmin } = useSimpleAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isPrompting, setIsPrompting] = useState(false);
@@ -56,6 +58,10 @@ export function InstallPwaButton() {
     return null;
   }
 
+  if (loading || !isAdmin) {
+    return null;
+  }
+
   return (
     <Button
       variant="secondary"
@@ -73,4 +79,3 @@ export function InstallPwaButton() {
     </Button>
   );
 }
-
