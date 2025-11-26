@@ -4,6 +4,7 @@ import type { PropsWithChildren } from 'react';
 import { ClerkProvider } from '@clerk/nextjs';
 import { usePathname } from 'next/navigation';
 import { AppProviders } from './providers';
+import { PwaInit } from '@/components/pwa-init';
 
 const marketingPrefixes = [
   '/',
@@ -30,7 +31,12 @@ export function ClientProviders({ children }: PropsWithChildren) {
   const shouldEnableClerk = !isMarketingRoute;
 
   if (!shouldEnableClerk) {
-    return <AppProviders enableAuthProviders={false}>{children}</AppProviders>;
+    return (
+      <>
+        <PwaInit />
+        <AppProviders enableAuthProviders={false}>{children}</AppProviders>
+      </>
+    );
   }
 
   return (
@@ -44,6 +50,7 @@ export function ClientProviders({ children }: PropsWithChildren) {
         process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL || '/profile'
       }
     >
+      <PwaInit />
       <AppProviders>{children}</AppProviders>
     </ClerkProvider>
   );

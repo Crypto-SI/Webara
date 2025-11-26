@@ -13,6 +13,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Loader2, LogOut, RefreshCw } from 'lucide-react';
+import { InstallPwaButton } from './install-pwa-button';
 
 type DashboardHeaderProps = {
   isLoading: boolean;
@@ -46,6 +47,7 @@ export function DashboardHeader({
         <Button asChild size="sm" className="w-full xs:w-auto sm:w-auto">
           <Link href="/profile">Profile</Link>
         </Button>
+        <InstallPwaButton />
         <Button
           variant="outline"
           size="sm"
