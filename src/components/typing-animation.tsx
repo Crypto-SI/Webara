@@ -43,7 +43,7 @@ export function TypingAnimation({ className, parts }: TypingAnimationProps) {
   }, [partIndex, charIndex, parts]);
 
   return (
-    <h1 className={cn(className, 'min-h-[1em] h-auto')}>
+    <span className={cn(className, 'inline-block min-h-[1em] h-auto')}>
       {renderedParts.map((part, index) => (
         <span key={index} className={part.className}>
           {part.text}
@@ -52,6 +52,6 @@ export function TypingAnimation({ className, parts }: TypingAnimationProps) {
       {partIndex < parts.length && (
         <span className="inline-block w-1 bg-foreground animate-pulse ml-1" />
       )}
-    </h1>
+    </span>
   );
 }

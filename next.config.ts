@@ -25,12 +25,6 @@ const nextConfig: NextConfig = {
     // Enforce linting in CI; if build-time linting is too strict, handle via a dedicated CI step
     ignoreDuringBuilds: false,
   },
-  modularizeImports: {
-    'lucide-react': {
-      transform: 'lucide-react/dist/esm/icons/{{member}}',
-      preventFullImport: true,
-    },
-  },
   images: {
     remotePatterns: [
       {

@@ -19,7 +19,33 @@ import type { Database, Json } from '@/lib/database.types';
 type QuoteRow = Database['public']['Tables']['quotes']['Row'];
 type QuoteInsert = Database['public']['Tables']['quotes']['Insert'];
 type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
-type ClerkUser = User;
+type ClerkUser = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  imageUrl: string | null;
+  primaryEmailAddressId: string | null;
+  emailAddresses: {
+    id: string;
+    emailAddress: string;
+    verification?: { status?: string | null } | null;
+  }[];
+  publicMetadata: Record<string, unknown>;
+  privateMetadata: Record<string, unknown>;
+  unsafeMetadata: Record<string, unknown>;
+  createdAt: number | string | null;
+  lastSignInAt: number | string | null;
+};
+type ClerkEmail = {
+  email: string;
+  verified: boolean;
+};
+type ClerkUserSummary = {
+  id: string;
+  email: string | null;
+  name: string;
+};
 type MinimalClerkClient = {
   users: {
     getUser: (id: string) => Promise<User>;
@@ -141,18 +167,35 @@ function normalizeRole(role?: string | null): ProfileInsert['role'] {
   return 'user';
 }
 
-function mapClerkUserToProfileInsert(user: ClerkUser): ProfileInsert {
-  const primaryEmail = user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId);
+function resolveClerkEmail(user: ClerkUser): ClerkEmail {
+  const primary = user.emailAddresses.find((e) => e.id === user.primaryEmailAddressId);
+  const fallback = primary ?? user.emailAddresses[0];
+
+  if (fallback?.emailAddress) {
+    return {
+      email: fallback.emailAddress,
+      verified: fallback.verification?.status === 'verified',
+    };
+  }
+
+  const sanitizedId = user.id.replace(/[^a-zA-Z0-9]/g, '') || 'user';
   return {
-    id: user.id,
+    email: `${sanitizedId.toLowerCase()}@clerk.local`,
+    verified: false,
+  };
+}
+
+function mapClerkUserToProfileInsert(user: ClerkUser): ProfileInsert {
+  const { email, verified } = resolveClerkEmail(user);
+  return {
     user_id: user.id,
-    email: primaryEmail?.emailAddress ?? '',
+    email,
     full_name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || null,
     first_name: user.firstName ?? null,
     last_name: user.lastName ?? null,
     avatar_url: user.imageUrl ?? null,
-    role: normalizeRole(user.publicMetadata?.role as string | undefined),
-    email_verified: primaryEmail?.verification?.status === 'verified',
+    role: normalizeRole(user.publicMetadata?.['role'] as string | undefined),
+    email_verified: verified,
     clerk_created_at: user.createdAt ? new Date(user.createdAt).toISOString() : null,
     clerk_last_sign_in_at: user.lastSignInAt ? new Date(user.lastSignInAt).toISOString() : null,
     public_metadata: (user.publicMetadata ?? {}) as Json,
@@ -160,6 +203,21 @@ function mapClerkUserToProfileInsert(user: ClerkUser): ProfileInsert {
     unsafe_metadata: (user.unsafeMetadata ?? {}) as Json,
     clerk_user_id: user.id,
     updated_at: new Date().toISOString(),
+  };
+}
+
+function summarizeClerkUser(user: ClerkUser): ClerkUserSummary {
+  const { email } = resolveClerkEmail(user);
+  const name =
+    `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() ||
+    user.username ||
+    email ||
+    'Unknown user';
+
+  return {
+    id: user.id,
+    email,
+    name,
   };
 }
 
@@ -177,22 +235,6 @@ async function requireAdminUser() {
   if (!isAdminRole(appRole) && !isAdminRole(unsafeRole)) {
     throw new Error('Forbidden');
   }
-}
-
-async function fetchAllClerkUsers(limit = 100): Promise<ClerkUser[]> {
-  const allUsers: ClerkUser[] = [];
-  let offset = 0;
-
-  // Paginate until we get fewer than the requested limit.
-  const client = await getClerkClient();
-  while (true) {
-    const page = await client.users.getUserList({ limit, offset });
-    allUsers.push(...page.data);
-    if (page.data.length < limit) break;
-    offset += limit;
-  }
-
-  return allUsers;
 }
 
 function deriveProjectTitle(
@@ -439,7 +481,8 @@ export async function syncClerkUser(userId: string): Promise<{
     const client = await getClerkClient();
     // Fetch user from Clerk
     const user = await client.users.getUser(userId);
-    const profilePayload = mapClerkUserToProfileInsert(user);
+    const normalizedUser = normalizeClerkUser(user);
+    const profilePayload = mapClerkUserToProfileInsert(normalizedUser);
 
     // Create Supabase client with service role key
     const supabase = createServerSupabaseClient();
@@ -448,7 +491,7 @@ export async function syncClerkUser(userId: string): Promise<{
     const { data, error } = await (supabase
       .from('profiles') as any)
       // Type cast to accommodate slight typing mismatch between Clerk metadata and our Supabase types.
-      .upsert(profilePayload as ProfileInsert)
+      .upsert(profilePayload as ProfileInsert, { onConflict: 'user_id' })
       .select()
       .single();
 
@@ -488,7 +531,7 @@ export async function syncAllClerkUsers(): Promise<{
     // Bulk upsert into Supabase
     const { data, error } = await (supabase
       .from('profiles') as any)
-      .upsert(profiles as ProfileInsert[], { onConflict: 'id' })
+      .upsert(profiles as ProfileInsert[], { onConflict: 'user_id' })
       .select();
 
     if (error) {
@@ -500,7 +543,8 @@ export async function syncAllClerkUsers(): Promise<{
       success: true,
       data: {
         synced: profiles.length,
-        users: data
+        users: data,
+        clerkUsers: users.map(summarizeClerkUser),
       },
       error: null
     };
@@ -530,26 +574,43 @@ export async function getClerkUsersNotInProfiles(): Promise<{
     
     // Get all existing user IDs from profiles
     const { data: existingProfiles, error: profileError } = await (supabase
-      .from('profiles') as any).select('user_id');
-    
+      .from('profiles') as any).select('user_id, clerk_user_id');
+
     if (profileError) {
       throw new Error(profileError.message);
     }
-    
-    const existingUserIds = new Set(
-      (existingProfiles as { user_id: string }[] | null)?.map((p) => p.user_id) || []
-    );
-    
+
+    const existingUserIds = new Set<string>();
+    (
+      (existingProfiles as { user_id: string | null; clerk_user_id: string | null }[] | null) ?? []
+    ).forEach((profile) => {
+      if (profile.user_id) {
+        existingUserIds.add(profile.user_id);
+      }
+      if (profile.clerk_user_id) {
+        existingUserIds.add(profile.clerk_user_id);
+      }
+    });
+
     // Find Clerk users not in profiles
     const missingUsers = clerkUsers.filter(user => !existingUserIds.has(user.id));
-    
+
     return {
       success: true,
-      data: missingUsers.map(user => ({
-        id: user.id,
-        email: user.emailAddresses.find(e => e.id === user.primaryEmailAddressId)?.emailAddress,
-        name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Unknown',
-      })),
+      data: missingUsers.map(user => {
+        const { email } = resolveClerkEmail(user);
+        const name =
+          `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() ||
+          user.username ||
+          email ||
+          'Unknown';
+
+        return {
+          id: user.id,
+          email,
+          name,
+        };
+      }),
       error: null
     };
   } catch (error) {
@@ -592,4 +653,106 @@ export async function createBlogPostAction(
     console.error('Failed to create blog post:', error);
     return { success: false, data: null, error: 'An unexpected error occurred.' };
   }
+}
+function normalizeClerkUser(user: User): ClerkUser {
+  return {
+    id: user.id,
+    firstName: user.firstName ?? null,
+    lastName: user.lastName ?? null,
+    username: user.username ?? null,
+    imageUrl: user.imageUrl ?? null,
+    primaryEmailAddressId: user.primaryEmailAddressId ?? null,
+    emailAddresses:
+      user.emailAddresses?.map((email) => ({
+        id: email.id,
+        emailAddress: email.emailAddress,
+        verification: email.verification,
+      })) ?? [],
+    publicMetadata: (user.publicMetadata ?? {}) as Record<string, unknown>,
+    privateMetadata: (user.privateMetadata ?? {}) as Record<string, unknown>,
+    unsafeMetadata: (user.unsafeMetadata ?? {}) as Record<string, unknown>,
+    createdAt: user.createdAt ?? null,
+    lastSignInAt: user.lastSignInAt ?? null,
+  };
+}
+
+type ClerkApiUser = {
+  id: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  username?: string | null;
+  image_url?: string | null;
+  primary_email_address_id?: string | null;
+  email_addresses?: {
+    id?: string | null;
+    email_address: string;
+    verification?: { status?: string | null } | null;
+  }[];
+  public_metadata?: Record<string, unknown>;
+  private_metadata?: Record<string, unknown>;
+  unsafe_metadata?: Record<string, unknown>;
+  created_at?: string | number | null;
+  last_sign_in_at?: string | number | null;
+};
+
+function mapApiUserToClerkUser(user: ClerkApiUser): ClerkUser {
+  return {
+    id: user.id,
+    firstName: user.first_name ?? null,
+    lastName: user.last_name ?? null,
+    username: user.username ?? null,
+    imageUrl: user.image_url ?? null,
+    primaryEmailAddressId: user.primary_email_address_id ?? null,
+    emailAddresses:
+      user.email_addresses?.map((email) => ({
+        id: email?.id ?? email?.email_address ?? '',
+        emailAddress: email?.email_address ?? '',
+        verification: email?.verification ?? undefined,
+      })) ?? [],
+    publicMetadata: user.public_metadata ?? {},
+    privateMetadata: user.private_metadata ?? {},
+    unsafeMetadata: user.unsafe_metadata ?? {},
+    createdAt: user.created_at ?? null,
+    lastSignInAt: user.last_sign_in_at ?? null,
+  };
+}
+
+const CLERK_API_URL = 'https://api.clerk.com/v1/users';
+
+async function fetchAllClerkUsers(limit = 100): Promise<ClerkUser[]> {
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  if (!secretKey) {
+    throw new Error('Missing Clerk secret key. Set CLERK_SECRET_KEY in env.');
+  }
+
+  const allUsers: ClerkUser[] = [];
+  let offset = 0;
+
+  while (true) {
+    const response = await fetch(`${CLERK_API_URL}?limit=${limit}&offset=${offset}`, {
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Failed to fetch Clerk users: ${response.status} ${body}`);
+    }
+
+    const batch = (await response.json()) as ClerkApiUser[];
+    if (!Array.isArray(batch)) {
+      break;
+    }
+
+    allUsers.push(...batch.map(mapApiUserToClerkUser));
+    if (batch.length < limit) {
+      break;
+    }
+
+    offset += limit;
+  }
+
+  return allUsers;
 }

@@ -25,7 +25,8 @@ type ClerkUser = {
   full_name?: string | null;
   username?: string | null;
   image_url?: string | null;
-  email_addresses?: { email_address: string; verification?: { status: string } }[];
+  primary_email_address_id?: string | null;
+  email_addresses?: { id?: string; email_address: string; verification?: { status: string } }[];
   phone_numbers?: { phone_number: string }[];
   public_metadata?: Record<string, unknown>;
   private_metadata?: Record<string, unknown>;
@@ -76,13 +77,32 @@ function deriveRole(user: ClerkUser): Database['public']['Tables']['profiles']['
   return 'user';
 }
 
+function resolveClerkApiEmail(user: ClerkUser) {
+  const primary = user.email_addresses?.find(
+    (email) => email.id && email.id === user.primary_email_address_id
+  );
+  const fallback = primary ?? user.email_addresses?.[0];
+
+  if (fallback?.email_address) {
+    return {
+      email: fallback.email_address,
+      verified: fallback.verification?.status === 'verified',
+    };
+  }
+
+  const sanitizedId = user.id.replace(/[^a-zA-Z0-9]/g, '') || 'user';
+  return {
+    email: `${sanitizedId.toLowerCase()}@clerk.local`,
+    verified: false,
+  };
+}
+
 function deriveEmailVerified(user: ClerkUser): boolean {
-  const primaryEmail = user.email_addresses?.[0];
-  return primaryEmail?.verification?.status === 'verified';
+  return resolveClerkApiEmail(user).verified;
 }
 
 function derivePrimaryEmail(user: ClerkUser): string {
-  return user.email_addresses?.[0]?.email_address || '';
+  return resolveClerkApiEmail(user).email;
 }
 
 function deriveFullName(user: ClerkUser) {

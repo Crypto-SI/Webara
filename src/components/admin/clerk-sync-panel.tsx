@@ -15,6 +15,12 @@ interface MissingUser {
   name: string;
 }
 
+interface ClerkUserSummary {
+  id: string;
+  email: string | null;
+  name: string;
+}
+
 export function ClerkSyncPanel() {
   const [missingUsers, setMissingUsers] = useState<MissingUser[]>([]);
   const [isLoadingMissing, setIsLoadingMissing] = useState(false);
@@ -23,6 +29,7 @@ export function ClerkSyncPanel() {
   const [syncingUserId, setSyncingUserId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [syncedClerkUsers, setSyncedClerkUsers] = useState<ClerkUserSummary[]>([]);
 
   const loadMissingUsers = async () => {
     setIsLoadingMissing(true);
@@ -85,11 +92,13 @@ export function ClerkSyncPanel() {
     setIsSyncingAll(true);
     setError(null);
     setSuccess(null);
+    setSyncedClerkUsers([]);
     
     try {
       const result = await syncAllClerkUsers();
       if (result.success) {
         setSuccess(`Successfully synced ${result.data?.synced || 0} users`);
+        setSyncedClerkUsers(result.data?.clerkUsers || []);
         toast({
           title: "Bulk Sync Complete",
           description: `Successfully synced ${result.data?.synced || 0} users`,
@@ -193,6 +202,21 @@ export function ClerkSyncPanel() {
         {missingUsers.length === 0 && !isLoadingMissing && (
           <div className="text-center py-4 text-muted-foreground">
             <p>All Clerk users are synced to Supabase profiles.</p>
+          </div>
+        )}
+
+        {syncedClerkUsers.length > 0 && (
+          <div className="space-y-2 border-t pt-4">
+            <h4 className="text-sm font-medium">Last Synced Clerk Users ({syncedClerkUsers.length})</h4>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {syncedClerkUsers.map((user) => (
+                <div key={user.id} className="rounded-md border p-3 text-sm">
+                  <p className="font-medium">{user.name}</p>
+                  <p className="text-muted-foreground">{user.email || 'No email on record'}</p>
+                  <p className="text-muted-foreground text-xs">Clerk ID: {user.id}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>
