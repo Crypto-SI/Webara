@@ -16,6 +16,7 @@ import { useAdminOverviewData, useQuoteDialog, useSignOutFlow } from './hooks';
 import type { BusinessRow, ProfileRow, QuoteRow } from './types';
 import { WeeklyExecutionTracker } from './weekly-execution-tracker';
 import { ClerkSyncPanel } from '@/components/admin/clerk-sync-panel';
+import { TestProfileSuite } from '@/components/admin/test-profile-suite';
 
 export function AdminDashboard() {
   const { data, setData, isLoading, error, refresh } = useAdminOverviewData();
@@ -149,6 +150,7 @@ export function AdminDashboard() {
         </Card>
 
         <ClerkSyncPanel />
+        <TestProfileSuite />
       </div>
 
       <QuoteDialog

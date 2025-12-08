@@ -15,10 +15,13 @@ import { QuoteFormSchema, type QuoteFormValues } from '@/lib/types';
 import type { BlogPost } from '@/lib/blog-posts';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import type { Database, Json } from '@/lib/database.types';
+import { TEST_PROFILE, TEST_PROFILE_BUSINESS, TEST_PROFILE_QUOTES } from '@/lib/test-profile';
 
 type QuoteRow = Database['public']['Tables']['quotes']['Row'];
 type QuoteInsert = Database['public']['Tables']['quotes']['Insert'];
 type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
+type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type BusinessInsert = Database['public']['Tables']['businesses']['Insert'];
 type ClerkUser = {
   id: string;
   firstName: string | null;
@@ -49,7 +52,20 @@ type ClerkUserSummary = {
 type MinimalClerkClient = {
   users: {
     getUser: (id: string) => Promise<User>;
-    getUserList: (params: { limit?: number; offset?: number }) => Promise<{ data: User[] }>;
+    getUserList: (params: {
+      limit?: number;
+      offset?: number;
+      emailAddress?: string[];
+    }) => Promise<{ data: User[] }>;
+    createUser: (params: {
+      emailAddress: string[];
+      password: string;
+      firstName?: string;
+      lastName?: string;
+      publicMetadata?: Record<string, unknown>;
+      unsafeMetadata?: Record<string, unknown>;
+    }) => Promise<User>;
+    deleteUser: (id: string) => Promise<void>;
   };
 };
 
@@ -235,6 +251,211 @@ async function requireAdminUser() {
   if (!isAdminRole(appRole) && !isAdminRole(unsafeRole)) {
     throw new Error('Forbidden');
   }
+}
+
+async function findClerkUserByEmail(
+  client: MinimalClerkClient,
+  email: string
+): Promise<User | null> {
+  const { data } = await client.users.getUserList({
+    limit: 5,
+    emailAddress: [email],
+  });
+
+  return data[0] ?? null;
+}
+
+async function findTestClerkUser(client: MinimalClerkClient): Promise<User | null> {
+  return findClerkUserByEmail(client, TEST_PROFILE.email);
+}
+
+async function findTestProfileRecord(
+  supabase: ReturnType<typeof createServerSupabaseClient>,
+  clerkUserId?: string | null
+): Promise<ProfileRow | null> {
+  const filters = [`email.eq.${TEST_PROFILE.email}`];
+  if (clerkUserId) {
+    filters.push(`user_id.eq.${clerkUserId}`);
+    filters.push(`clerk_user_id.eq.${clerkUserId}`);
+  }
+
+  let query = supabase.from('profiles').select('*');
+  if (filters.length === 1) {
+    query = query.eq('email', TEST_PROFILE.email);
+  } else {
+    query = query.or(filters.join(','));
+  }
+
+  const { data, error } = await query.limit(1).maybeSingle();
+
+  if (error && (error as { code?: string }).code !== 'PGRST116') {
+    throw error;
+  }
+
+  return (data as ProfileRow | null) ?? null;
+}
+
+async function deleteTestProfileRecords(
+  supabase: ReturnType<typeof createServerSupabaseClient>,
+  userIds: string[],
+  email: string
+) {
+  const uniqueUserIds = Array.from(
+    new Set(userIds.filter((value): value is string => Boolean(value)))
+  );
+
+  if (uniqueUserIds.length > 0) {
+    const { error: quotesError } = await supabase
+      .from('quotes')
+      .delete()
+      .in('user_id', uniqueUserIds);
+    if (quotesError) {
+      throw new Error(quotesError.message);
+    }
+
+    const { error: businessesError } = await supabase
+      .from('businesses')
+      .delete()
+      .in('owner_id', uniqueUserIds);
+    if (businessesError) {
+      throw new Error(businessesError.message);
+    }
+  }
+
+  const profileFilters = [`email.eq.${email}`];
+  uniqueUserIds.forEach((id) => {
+    profileFilters.push(`user_id.eq.${id}`);
+    profileFilters.push(`clerk_user_id.eq.${id}`);
+  });
+
+  let profileQuery = supabase.from('profiles').delete();
+  if (profileFilters.length === 1) {
+    profileQuery = profileQuery.eq('email', email);
+  } else {
+    profileQuery = profileQuery.or(profileFilters.join(','));
+  }
+
+  const { error: profileError } = await profileQuery;
+  if (profileError) {
+    throw new Error(profileError.message);
+  }
+}
+
+type TestProfileSeedSummary = {
+  businessId: string | null;
+  businessCreated: boolean;
+  quoteIds: string[];
+  quotesCreated: number;
+  totalQuotes: number;
+};
+
+async function seedTestProfileData(
+  supabase: ReturnType<typeof createServerSupabaseClient>,
+  userId: string
+): Promise<TestProfileSeedSummary> {
+  const now = new Date().toISOString();
+  let businessId: string | null = null;
+  let businessCreated = false;
+
+  const { data: existingBusiness, error: existingBusinessError } = await supabase
+    .from('businesses')
+    .select('id')
+    .eq('owner_id', userId)
+    .eq('business_name', TEST_PROFILE_BUSINESS.businessName)
+    .maybeSingle();
+
+  if (existingBusinessError && (existingBusinessError as { code?: string }).code !== 'PGRST116') {
+    throw new Error(existingBusinessError.message);
+  }
+
+  if (existingBusiness?.id) {
+    businessId = existingBusiness.id;
+  } else {
+    const { data: insertedBusiness, error: insertBusinessError } = await supabase
+      .from('businesses')
+      .insert({
+        owner_id: userId,
+        business_name: TEST_PROFILE_BUSINESS.businessName,
+        industry: TEST_PROFILE_BUSINESS.industry,
+        website: TEST_PROFILE_BUSINESS.website,
+        description: TEST_PROFILE_BUSINESS.description,
+        company_size: TEST_PROFILE_BUSINESS.companySize,
+        business_type: TEST_PROFILE_BUSINESS.businessType,
+        contact_preferences: TEST_PROFILE_BUSINESS.contactPreferences as Json,
+        created_at: now,
+        updated_at: now,
+      } satisfies BusinessInsert)
+      .select('id')
+      .single();
+
+    if (insertBusinessError) {
+      throw new Error(insertBusinessError.message);
+    }
+
+    businessId = insertedBusiness?.id ?? null;
+    businessCreated = Boolean(insertedBusiness?.id);
+  }
+
+  if (!businessId) {
+    throw new Error('Unable to locate or create test business.');
+  }
+
+  const { data: existingQuotes, error: existingQuotesError } = await supabase
+    .from('quotes')
+    .select('id,title')
+    .eq('user_id', userId);
+
+  if (existingQuotesError) {
+    throw new Error(existingQuotesError.message);
+  }
+
+  const existingTitles = new Set((existingQuotes ?? []).map((quote) => quote.title));
+
+  const quotesToInsert: QuoteInsert[] = TEST_PROFILE_QUOTES.filter(
+    (quote) => !existingTitles.has(quote.title)
+  ).map((quote) => ({
+    user_id: userId,
+    business_id: businessId,
+    title: quote.title,
+    website_needs: quote.websiteNeeds,
+    collaboration_preferences: quote.collaborationPreferences,
+    budget_range: quote.budgetRange,
+    ai_quote: quote.aiQuote,
+    suggested_collaboration: quote.suggestedCollaboration,
+    ai_suggestions: quote.aiSuggestions as Json,
+    status: quote.status,
+    estimated_cost: quote.estimatedCost,
+    currency: quote.currency,
+    created_at: now,
+    updated_at: now,
+  }));
+
+  const seededQuoteIds: string[] = [];
+
+  if (quotesToInsert.length > 0) {
+    const { data: insertedQuotes, error: insertQuotesError } = await supabase
+      .from('quotes')
+      .insert(quotesToInsert)
+      .select('id');
+
+    if (insertQuotesError) {
+      throw new Error(insertQuotesError.message);
+    }
+
+    insertedQuotes?.forEach((quote) => {
+      if (quote?.id) {
+        seededQuoteIds.push(quote.id);
+      }
+    });
+  }
+
+  return {
+    businessId,
+    businessCreated,
+    quoteIds: seededQuoteIds,
+    quotesCreated: seededQuoteIds.length,
+    totalQuotes: (existingQuotes?.length ?? 0) + seededQuoteIds.length,
+  };
 }
 
 function deriveProjectTitle(
@@ -618,6 +839,218 @@ export async function getClerkUsersNotInProfiles(): Promise<{
     return {
       success: false,
       data: [],
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+}
+
+type TestProfileStatusPayload = {
+  clerkUser: {
+    id: string;
+    email: string | null;
+    createdAt: string | null;
+    lastSignInAt: string | null;
+  } | null;
+  profile: ProfileRow | null;
+  businessCount: number;
+  quoteCount: number;
+};
+
+export async function getTestProfileStatus(): Promise<{
+  success: boolean;
+  data: TestProfileStatusPayload | null;
+  error: string | null;
+}> {
+  try {
+    await requireAdminUser();
+
+    const client = await getClerkClient();
+    const supabase = createServerSupabaseClient();
+
+    const clerkUser = await findTestClerkUser(client);
+    const normalizedUser = clerkUser ? normalizeClerkUser(clerkUser) : null;
+    const profile = await findTestProfileRecord(supabase, normalizedUser?.id ?? null);
+
+    let businessCount = 0;
+    let quoteCount = 0;
+
+    if (normalizedUser) {
+      const [businessResponse, quoteResponse] = await Promise.all([
+        supabase
+          .from('businesses')
+          .select('id', { count: 'exact', head: true })
+          .eq('owner_id', normalizedUser.id),
+        supabase
+          .from('quotes')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', normalizedUser.id),
+      ]);
+
+      if (businessResponse.error) {
+        throw new Error(businessResponse.error.message);
+      }
+
+      if (quoteResponse.error) {
+        throw new Error(quoteResponse.error.message);
+      }
+
+      businessCount = businessResponse.count ?? 0;
+      quoteCount = quoteResponse.count ?? 0;
+    }
+
+    const summary = normalizedUser
+      ? {
+          id: normalizedUser.id,
+          email: resolveClerkEmail(normalizedUser).email,
+          createdAt: normalizedUser.createdAt
+            ? new Date(normalizedUser.createdAt).toISOString()
+            : null,
+          lastSignInAt: normalizedUser.lastSignInAt
+            ? new Date(normalizedUser.lastSignInAt).toISOString()
+            : null,
+        }
+      : null;
+
+    return {
+      success: true,
+      data: { clerkUser: summary, profile, businessCount, quoteCount },
+      error: null,
+    };
+  } catch (error) {
+    console.error('Failed to load test profile status:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+}
+
+export async function createTestProfile(): Promise<{
+  success: boolean;
+  data:
+    | {
+        clerkUserId: string;
+        profile: ProfileRow | null;
+        message: string;
+        seedSummary: TestProfileSeedSummary;
+      }
+    | null;
+  error: string | null;
+}> {
+  try {
+    await requireAdminUser();
+
+    const client = await getClerkClient();
+    const supabase = createServerSupabaseClient();
+
+    let clerkUser = await findTestClerkUser(client);
+    let created = false;
+
+    if (!clerkUser) {
+      clerkUser = await client.users.createUser({
+        emailAddress: [TEST_PROFILE.email],
+        password: TEST_PROFILE.password,
+        firstName: TEST_PROFILE.firstName,
+        lastName: TEST_PROFILE.lastName,
+        publicMetadata: TEST_PROFILE.metadata,
+        unsafeMetadata: TEST_PROFILE.metadata,
+      });
+      created = true;
+    }
+
+    const normalizedUser = normalizeClerkUser(clerkUser);
+    const profilePayload = mapClerkUserToProfileInsert(normalizedUser);
+
+    profilePayload.role = TEST_PROFILE.role;
+    profilePayload.first_name = TEST_PROFILE.firstName;
+    profilePayload.last_name = TEST_PROFILE.lastName;
+    profilePayload.full_name = TEST_PROFILE.name;
+    profilePayload.email = TEST_PROFILE.email;
+    profilePayload.public_metadata = {
+      ...(profilePayload.public_metadata as Record<string, unknown>),
+      ...TEST_PROFILE.metadata,
+    } as Json;
+    profilePayload.unsafe_metadata = {
+      ...(profilePayload.unsafe_metadata as Record<string, unknown>),
+      ...TEST_PROFILE.metadata,
+    } as Json;
+
+    const { data, error } = await (supabase
+      .from('profiles') as any)
+      .upsert(profilePayload as ProfileInsert, { onConflict: 'user_id' })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase upsert error (test profile):', error);
+      throw new Error(error.message);
+    }
+
+    const seedSummary = await seedTestProfileData(supabase, normalizedUser.id);
+
+    return {
+      success: true,
+      data: {
+        clerkUserId: normalizedUser.id,
+        profile: data as ProfileRow,
+        message: created
+          ? 'Test profile created and seeded sample business + quotes.'
+          : 'Existing test profile synced and sample data ensured.',
+        seedSummary,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error('Failed to create test profile:', error);
+    return {
+      success: false,
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+}
+
+export async function deleteTestProfile(): Promise<{
+  success: boolean;
+  data: { deletedUserId: string | null; deletedProfileId: string | null } | null;
+  error: string | null;
+}> {
+  try {
+    await requireAdminUser();
+
+    const client = await getClerkClient();
+    const supabase = createServerSupabaseClient();
+
+    const clerkUser = await findTestClerkUser(client);
+    const normalizedUser = clerkUser ? normalizeClerkUser(clerkUser) : null;
+    const profile = await findTestProfileRecord(supabase, normalizedUser?.id ?? null);
+
+    const userIds = [
+      normalizedUser?.id ?? null,
+      profile?.user_id ?? null,
+      profile?.clerk_user_id ?? null,
+    ].filter((value): value is string => Boolean(value));
+
+    await deleteTestProfileRecords(supabase, userIds, TEST_PROFILE.email);
+
+    if (normalizedUser) {
+      await client.users.deleteUser(normalizedUser.id);
+    }
+
+    return {
+      success: true,
+      data: {
+        deletedUserId: normalizedUser?.id ?? null,
+        deletedProfileId: profile?.id ?? null,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error('Failed to delete test profile:', error);
+    return {
+      success: false,
+      data: null,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
     };
   }
