@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
+import { QuoteSection } from '@/components/sections/quote-section';
 import {
   Card,
   CardContent,
@@ -28,6 +29,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Handshake, TrendingUp, Clock, Building2 } from 'lucide-react';
+import type { QuoteFormValues } from '@/lib/types';
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
 type BusinessRow = Database['public']['Tables']['businesses']['Row'];
@@ -98,8 +100,37 @@ export function UserDashboard({ user, profile, businesses, quotes, isLoading }: 
       ? selectedQuote.ai_suggestions
       : [];
 
+  const quoteFormDefaults = useMemo(() => {
+    const defaults: Partial<QuoteFormValues> = {};
+    const profileName =
+      profile?.full_name?.trim() ||
+      [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim();
+    const metadata = (user.user_metadata || {}) as {
+      full_name?: string;
+      first_name?: string;
+      last_name?: string;
+    };
+    const userName =
+      metadata.full_name?.trim() ||
+      [metadata.first_name, metadata.last_name].filter(Boolean).join(' ').trim();
+    const derivedName = profileName || userName;
+    if (derivedName) {
+      defaults.name = derivedName;
+    }
+
+    const derivedEmail = profile?.email || user.email;
+    if (derivedEmail) {
+      defaults.email = derivedEmail;
+    }
+
+    return defaults;
+  }, [profile, user]);
+
+  const hasPrefillValues = Object.keys(quoteFormDefaults).length > 0 ? quoteFormDefaults : undefined;
+
   return (
     <div className="space-y-6">
+      <QuoteSection defaultValues={hasPrefillValues} canPropose />
       {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>

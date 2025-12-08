@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -40,7 +40,38 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-export function QuoteSection() {
+type QuoteSectionProps = {
+  defaultValues?: Partial<QuoteFormValues>;
+  canPropose?: boolean;
+};
+
+const EMPTY_FORM_VALUES: QuoteFormValues = {
+  name: '',
+  email: '',
+  websiteNeeds: '',
+  collaborationPreferences: '',
+  budget: '',
+};
+
+function haveEqualDefaults(
+  prev?: Partial<QuoteFormValues>,
+  next?: Partial<QuoteFormValues>
+) {
+  if (prev === next) return true;
+  if (!prev || !next) return false;
+  const keys = new Set<keyof QuoteFormValues>([
+    ...Object.keys(prev),
+    ...Object.keys(next),
+  ] as (keyof QuoteFormValues)[]);
+  for (const key of keys) {
+    if (prev[key] !== next[key]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function QuoteSection({ defaultValues, canPropose = false }: QuoteSectionProps = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AiQuoteAndSuggestions | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,19 +81,35 @@ export function QuoteSection() {
   const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  // Marketing page runs without Clerk; treat users as signed-out in this context.
-  const isSignedIn = false;
+  const previousDefaultsRef = useRef<Partial<QuoteFormValues> | undefined>(
+    defaultValues
+  );
 
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(QuoteFormSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      websiteNeeds: '',
-      collaborationPreferences: '',
-      budget: '',
+      ...EMPTY_FORM_VALUES,
+      ...defaultValues,
     },
   });
+  const { isDirty } = form.formState;
+
+  useEffect(() => {
+    if (!defaultValues || Object.keys(defaultValues).length === 0) {
+      return;
+    }
+    if (isDirty) {
+      return;
+    }
+    if (haveEqualDefaults(previousDefaultsRef.current, defaultValues)) {
+      return;
+    }
+    previousDefaultsRef.current = defaultValues;
+    form.reset({
+      ...EMPTY_FORM_VALUES,
+      ...defaultValues,
+    });
+  }, [defaultValues, form, isDirty]);
 
   async function onSubmit(values: QuoteFormValues) {
     setIsLoading(true);
@@ -107,11 +154,10 @@ export function QuoteSection() {
 
   async function handleProposeQuote() {
     if (!result) return;
-    if (!isSignedIn) {
+    if (!canPropose) {
       setSaveError('Please sign in to save this proposal to your dashboard.');
       return;
     }
-
     setIsSavingQuote(true);
     setSaveError(null);
 
