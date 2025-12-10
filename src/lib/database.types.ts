@@ -73,6 +73,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       businesses: {
         Row: {
@@ -114,6 +115,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       quotes: {
         Row: {
@@ -194,6 +196,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       quote_activities: {
         Row: {
@@ -241,6 +244,7 @@ export interface Database {
           metadata?: Json
           created_at?: string
         }
+        Relationships: []
       }
       projects: {
         Row: {
@@ -288,6 +292,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       project_milestones: {
         Row: {
@@ -323,6 +328,7 @@ export interface Database {
           sort_order?: number
           created_at?: string
         }
+        Relationships: []
       }
       project_documents: {
         Row: {
@@ -352,6 +358,7 @@ export interface Database {
           file_size?: number
           created_at?: string
         }
+        Relationships: []
       }
       audit_logs: {
         Row: {
@@ -384,6 +391,79 @@ export interface Database {
           new_values?: Json | null
           created_at?: string
         }
+        Relationships: []
+      }
+      weekly_marketing_checklist_items: {
+        Row: {
+          id: string
+          week_start_date: string
+          task_key: string
+          task_label: string
+          platform: string
+          day_of_week: number
+          completed: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          week_start_date: string
+          task_key: string
+          task_label: string
+          platform: string
+          day_of_week: number
+          completed?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          week_start_date?: string
+          task_key?: string
+          task_label?: string
+          platform?: string
+          day_of_week?: number
+          completed?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      weekly_marketing_summaries: {
+        Row: {
+          id: string
+          week_start_date: string
+          total_tasks: number
+          completed_tasks: number
+          completion_rate: number
+          breakdown_json: Json
+          committed_at: string
+          committed_by: string | null
+          is_committed: boolean
+        }
+        Insert: {
+          id?: string
+          week_start_date: string
+          total_tasks: number
+          completed_tasks: number
+          completion_rate: number
+          breakdown_json: Json
+          committed_at?: string
+          committed_by?: string | null
+          is_committed?: boolean
+        }
+        Update: {
+          id?: string
+          week_start_date?: string
+          total_tasks?: number
+          completed_tasks?: number
+          completion_rate?: number
+          breakdown_json?: Json
+          committed_at?: string
+          committed_by?: string | null
+          is_committed?: boolean
+        }
+        Relationships: []
       }
     }
     Views: {

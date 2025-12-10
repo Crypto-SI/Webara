@@ -5,18 +5,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { createTestProfile, deleteTestProfile, getTestProfileStatus } from '@/app/actions';
+import {
+  createTestProfile,
+  deleteTestProfile,
+  getTestProfileStatus,
+  type TestProfileSeedSummary,
+} from '@/app/actions';
 import { TEST_PROFILE } from '@/lib/test-profile';
 import { toast } from '@/hooks/use-toast';
 
 type TestProfileStatus = NonNullable<
   Awaited<ReturnType<typeof getTestProfileStatus>>['data']
 >;
-
-type CreateTestProfileData = Awaited<ReturnType<typeof createTestProfile>>['data'];
-type SeedSummary = CreateTestProfileData extends { seedSummary: infer T }
-  ? T
-  : never;
 
 const credentialItems = [
   { label: 'Email', value: TEST_PROFILE.email },
@@ -30,7 +30,7 @@ export function TestProfileSuite() {
   const [isCreating, setIsCreating] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [seedSummary, setSeedSummary] = useState<SeedSummary | null>(null);
+  const [seedSummary, setSeedSummary] = useState<TestProfileSeedSummary | null>(null);
 
   const refreshStatus = useCallback(async () => {
     setIsLoading(true);

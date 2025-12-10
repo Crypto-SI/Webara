@@ -2,6 +2,7 @@
 'use server';
 
 import { auth, clerkClient, type User } from '@clerk/nextjs/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   provideAiPoweredQuote,
   type QuoteOutput,
@@ -21,7 +22,9 @@ type QuoteRow = Database['public']['Tables']['quotes']['Row'];
 type QuoteInsert = Database['public']['Tables']['quotes']['Insert'];
 type ProfileInsert = Database['public']['Tables']['profiles']['Insert'];
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+type BusinessRow = Database['public']['Tables']['businesses']['Row'];
 type BusinessInsert = Database['public']['Tables']['businesses']['Insert'];
+type SupabaseServerClient = SupabaseClient<Database>;
 type ClerkUser = {
   id: string;
   firstName: string | null;
@@ -270,7 +273,7 @@ async function findTestClerkUser(client: MinimalClerkClient): Promise<User | nul
 }
 
 async function findTestProfileRecord(
-  supabase: ReturnType<typeof createServerSupabaseClient>,
+  supabase: SupabaseServerClient,
   clerkUserId?: string | null
 ): Promise<ProfileRow | null> {
   const filters = [`email.eq.${TEST_PROFILE.email}`];
@@ -296,7 +299,7 @@ async function findTestProfileRecord(
 }
 
 async function deleteTestProfileRecords(
-  supabase: ReturnType<typeof createServerSupabaseClient>,
+  supabase: SupabaseServerClient,
   userIds: string[],
   email: string
 ) {
@@ -341,7 +344,7 @@ async function deleteTestProfileRecords(
   }
 }
 
-type TestProfileSeedSummary = {
+export type TestProfileSeedSummary = {
   businessId: string | null;
   businessCreated: boolean;
   quoteIds: string[];
@@ -350,7 +353,7 @@ type TestProfileSeedSummary = {
 };
 
 async function seedTestProfileData(
-  supabase: ReturnType<typeof createServerSupabaseClient>,
+  supabase: SupabaseServerClient,
   userId: string
 ): Promise<TestProfileSeedSummary> {
   const now = new Date().toISOString();
@@ -362,7 +365,7 @@ async function seedTestProfileData(
     .select('id')
     .eq('owner_id', userId)
     .eq('business_name', TEST_PROFILE_BUSINESS.businessName)
-    .maybeSingle();
+    .maybeSingle<Pick<BusinessRow, 'id'>>();
 
   if (existingBusinessError && (existingBusinessError as { code?: string }).code !== 'PGRST116') {
     throw new Error(existingBusinessError.message);
@@ -422,7 +425,7 @@ async function seedTestProfileData(
     budget_range: quote.budgetRange,
     ai_quote: quote.aiQuote,
     suggested_collaboration: quote.suggestedCollaboration,
-    ai_suggestions: quote.aiSuggestions as Json,
+    ai_suggestions: quote.aiSuggestions as unknown as Json,
     status: quote.status,
     estimated_cost: quote.estimatedCost,
     currency: quote.currency,
