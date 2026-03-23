@@ -9,11 +9,53 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      apps: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          website_url: string | null
+          description: string | null
+          status: 'active' | 'planning' | 'archived'
+          sort_order: number
+          created_by: string | null
+          updated_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          website_url?: string | null
+          description?: string | null
+          status?: 'active' | 'planning' | 'archived'
+          sort_order?: number
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          website_url?: string | null
+          description?: string | null
+          status?: 'active' | 'planning' | 'archived'
+          sort_order?: number
+          created_by?: string | null
+          updated_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           id: string
           user_id: string
-          clerk_user_id: string
+          clerk_user_id: string | null
           email: string
           email_verified: boolean
           first_name: string | null
@@ -34,7 +76,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
-          clerk_user_id: string
+          clerk_user_id?: string | null
           email: string
           email_verified?: boolean
           first_name?: string | null
@@ -55,7 +97,7 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
-          clerk_user_id?: string
+          clerk_user_id?: string | null
           email?: string
           email_verified?: boolean
           first_name?: string | null

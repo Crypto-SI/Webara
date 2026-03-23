@@ -1,25 +1,22 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
+import { createAdminSupabaseClient } from '@/lib/supabase/admin';
+import { requireAuthenticatedProfile } from '@/lib/auth-server';
 
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ quoteId: string }> }
 ) {
   const { quoteId } = await context.params;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const { userId } = await auth();
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    return NextResponse.json(
-      { error: 'Supabase environment variables are not configured.' },
-      { status: 500 }
-    );
-  }
+  let userId: string;
+  let serviceClient: ReturnType<typeof createAdminSupabaseClient>;
 
-  if (!userId) {
+  try {
+    const authContext = await requireAuthenticatedProfile();
+    userId = authContext.user.id;
+    serviceClient = authContext.supabase;
+  } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -54,13 +51,8 @@ export async function PATCH(
     );
   }
 
-  const serviceClient = createClient<Database>(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
-
   type QuoteRow = Database['public']['Tables']['quotes']['Row'];
 
-  // Ensure the quote belongs to the authenticated user
   const { data: quote, error: quoteError } = await serviceClient
     .from('quotes')
     .select('id, user_id')

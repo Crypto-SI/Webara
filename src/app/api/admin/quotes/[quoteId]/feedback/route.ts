@@ -1,28 +1,13 @@
 import { NextResponse } from 'next/server';
-import { auth, currentUser } from '@clerk/nextjs/server';
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/lib/database.types';
+import { getAdminSupabaseContext } from '@/lib/admin-auth';
 
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ quoteId: string }> }
 ) {
   const { quoteId } = await context.params;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const authResponse = await auth();
-  const { userId } = authResponse;
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    return NextResponse.json(
-      { error: 'Supabase environment variables are not configured.' },
-      { status: 500 }
-    );
-  }
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const admin = await getAdminSupabaseContext();
+  if ('errorResponse' in admin) return admin.errorResponse;
 
   if (!quoteId) {
     return NextResponse.json(
@@ -55,58 +40,12 @@ export async function PATCH(
     );
   }
 
-  const serviceClient = createClient<Database>(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
-
-  let effectiveRole: string | null = null;
-
-  try {
-    const clerkUser = await currentUser();
-    const metadataRole = String(
-      clerkUser?.publicMetadata?.role ??
-        clerkUser?.privateMetadata?.role ??
-        clerkUser?.unsafeMetadata?.role ??
-        ''
-    ).toLowerCase();
-
-    if (metadataRole) {
-      effectiveRole = metadataRole;
-    }
-  } catch (error) {
-    console.error('Failed to load Clerk user metadata for role check:', error);
-  }
-
-  if (effectiveRole !== 'admin') {
-    const { data: roleRow, error: profileError } = await serviceClient
-      .from('profiles')
-      .select('role')
-      .eq('user_id', userId)
-      .maybeSingle<{ role: string | null }>();
-
-    if (profileError && profileError.code !== 'PGRST116') {
-      console.error('Unable to verify admin role:', profileError);
-      return NextResponse.json(
-        { error: 'Unable to verify admin privileges.' },
-        { status: 500 }
-      );
-    }
-
-    if (roleRow?.role) {
-      effectiveRole = roleRow.role.toLowerCase();
-    }
-  }
-
-  if (effectiveRole !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
   const normalizedFeedback =
     typeof feedbackValue === 'string'
       ? feedbackValue.trim()
       : feedbackValue ?? null;
 
-  const { data: updatedQuote, error: updateError } = await serviceClient
+  const { data: updatedQuote, error: updateError } = await admin.supabase
     .from('quotes')
     .update({
       admin_feedback:

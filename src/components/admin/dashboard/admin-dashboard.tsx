@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 import { UsersWithProposals } from '@/components/admin/users-with-proposals';
 
+import { AppsCard } from './apps-card';
 import { DashboardHeader } from './dashboard-header';
 import { SummaryGrid } from './summary-grid';
 import { UsersTableCard } from './users-table-card';
@@ -13,15 +14,90 @@ import { CollaborationStatusCard } from './collaboration-status-card';
 import { QuotesCard } from './quotes-card';
 import { QuoteDialog } from './quote-dialog';
 import { useAdminOverviewData, useQuoteDialog, useSignOutFlow } from './hooks';
-import type { BusinessRow, ProfileRow, QuoteRow } from './types';
+import type { AppRow, BusinessRow, ProfileRow, QuoteRow } from './types';
 import { WeeklyExecutionTracker } from './weekly-execution-tracker';
-import { ClerkSyncPanel } from '@/components/admin/clerk-sync-panel';
-import { TestProfileSuite } from '@/components/admin/test-profile-suite';
 
 export function AdminDashboard() {
   const { data, setData, isLoading, error, refresh } = useAdminOverviewData();
   const { isSigningOut, signOutDialogOpen, setSignOutDialogOpen, handleSignOut } = useSignOutFlow();
   const quoteDialog = useQuoteDialog(data, setData);
+
+  const upsertAppInState = useCallback(
+    (app: AppRow) => {
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              apps: current.apps.some((existing) => existing.id === app.id)
+                ? current.apps.map((existing) => (existing.id === app.id ? app : existing))
+                : [...current.apps, app],
+            }
+          : current
+      );
+    },
+    [setData]
+  );
+
+  const handleCreateApp = useCallback(
+    async (input: {
+      name: string;
+      website_url: string;
+      description: string;
+      status: AppRow['status'];
+      sort_order: number;
+    }) => {
+      const response = await fetch('/api/admin/apps', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(input),
+      });
+
+      const body = (await response.json().catch(() => null)) as
+        | { error?: string; app?: AppRow }
+        | null;
+
+      if (!response.ok || !body?.app) {
+        throw new Error(body?.error || 'Failed to create app.');
+      }
+
+      upsertAppInState(body.app);
+    },
+    [upsertAppInState]
+  );
+
+  const handleUpdateApp = useCallback(
+    async (
+      appId: string,
+      input: {
+        name: string;
+        website_url: string;
+        description: string;
+        status: AppRow['status'];
+        sort_order: number;
+      }
+    ) => {
+      const response = await fetch(`/api/admin/apps/${encodeURIComponent(appId)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(input),
+      });
+
+      const body = (await response.json().catch(() => null)) as
+        | { error?: string; app?: AppRow }
+        | null;
+
+      if (!response.ok || !body?.app) {
+        throw new Error(body?.error || 'Failed to update app.');
+      }
+
+      upsertAppInState(body.app);
+    },
+    [upsertAppInState]
+  );
 
   const profileByUserId = useMemo(() => {
     if (!data) return {} as Record<string, ProfileRow>;
@@ -122,6 +198,13 @@ export function AdminDashboard() {
           <CollaborationStatusCard statusBreakdown={statusBreakdown} isLoading={isLoading} />
         </div>
 
+        <AppsCard
+          apps={data?.apps ?? []}
+          isLoading={isLoading}
+          onCreateApp={handleCreateApp}
+          onUpdateApp={handleUpdateApp}
+        />
+
         <QuotesCard
           quotes={data?.quotes ?? []}
           profiles={profileByUserId}
@@ -148,9 +231,6 @@ export function AdminDashboard() {
             <WeeklyExecutionTracker />
           </CardContent>
         </Card>
-
-        <ClerkSyncPanel />
-        <TestProfileSuite />
       </div>
 
       <QuoteDialog

@@ -13,36 +13,24 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User } from 'lucide-react';
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  useClerk,
-  useUser,
-} from '@clerk/nextjs';
-
+import { useSimpleAuth } from '@/contexts/auth-context-simple';
 
 export function Header() {
   const [isOpen, setIsOpen] = React.useState(false);
-  const { user } = useUser();
-  const clerk = useClerk();
+  const { user, isAdmin, signOut } = useSimpleAuth();
   const router = useRouter();
   const displayName =
-    user?.fullName ||
-    user?.primaryEmailAddress?.emailAddress?.split('@')[0] ||
+    user?.user_metadata?.full_name?.toString() ||
+    user?.email?.split('@')[0] ||
     'Account';
-  const isAdmin =
-    ((user?.publicMetadata?.role as string | undefined)?.toLowerCase() ||
-      '').includes('admin');
   const dashboardHref = isAdmin ? '/admin' : '/profile';
 
   const handleSignOut = useCallback(async () => {
-    await clerk.signOut();
+    await signOut();
     setIsOpen(false);
     router.push('/');
     router.refresh();
-  }, [clerk, router]);
+  }, [router, signOut]);
 
   const navLinks = [
     { href: '/#portfolio', label: 'Portfolio' },
@@ -106,7 +94,7 @@ export function Header() {
           ))}
         </nav>
         <div className="hidden md:flex items-center gap-4">
-          <SignedIn>
+          {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2">
@@ -128,15 +116,16 @@ export function Header() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </SignedIn>
-          <SignedOut>
-            <SignInButton mode="modal">
-              <Button>Login</Button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <Button variant="outline">Sign Up</Button>
-            </SignUpButton>
-          </SignedOut>
+          ) : (
+            <>
+              <Button asChild>
+                <Link href="/login">Login</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/signup">Sign Up</Link>
+              </Button>
+            </>
+          )}
         </div>
         <div className="md:hidden">
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -167,7 +156,7 @@ export function Header() {
                   ))}
                 </nav>
                 <div className="flex flex-col gap-2 pt-4 border-t">
-                  <SignedIn>
+                  {user ? (
                     <>
                       <Button asChild className="w-full" onClick={() => setIsOpen(false)}>
                         <Link href={dashboardHref}>Dashboard</Link>
@@ -182,19 +171,20 @@ export function Header() {
                         Sign Out
                       </Button>
                     </>
-                  </SignedIn>
-                  <SignedOut>
+                  ) : (
                     <>
-                      <SignInButton mode="modal">
-                        <Button variant="outline" className="w-full">
+                      <Button variant="outline" className="w-full" asChild>
+                        <Link href="/login" onClick={() => setIsOpen(false)}>
                           Login
-                        </Button>
-                      </SignInButton>
-                      <SignUpButton mode="modal">
-                        <Button className="w-full">Sign Up</Button>
-                      </SignUpButton>
+                        </Link>
+                      </Button>
+                      <Button className="w-full" asChild>
+                        <Link href="/signup" onClick={() => setIsOpen(false)}>
+                          Sign Up
+                        </Link>
+                      </Button>
                     </>
-                  </SignedOut>
+                  )}
                 </div>
               </div>
             </SheetContent>

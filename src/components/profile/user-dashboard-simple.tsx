@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { UserResource } from '@clerk/types';
+import type { User } from '@supabase/supabase-js';
 import type { Database } from '@/lib/database.types';
 import { QuoteSection } from '@/components/sections/quote-section';
 import {
@@ -37,7 +37,7 @@ type QuoteRow = Database['public']['Tables']['quotes']['Row'];
 type QuoteWithFeedback = QuoteRow & { admin_feedback?: string | null };
 
 interface UserDashboardProps {
-  user: UserResource;
+  user: User;
   profile: ProfileRow | null;
   businesses: BusinessRow[];
   quotes: QuoteRow[];
@@ -106,17 +106,21 @@ export function UserDashboardSimple({ user, profile, businesses, quotes, isLoadi
       profile?.full_name?.trim() ||
       [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim();
     const userName =
-      user.fullName?.trim() ||
-      [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+      (typeof user.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()) ||
+      [
+        typeof user.user_metadata?.first_name === 'string' ? user.user_metadata.first_name : null,
+        typeof user.user_metadata?.last_name === 'string' ? user.user_metadata.last_name : null,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
     const derivedName = profileName || userName;
     if (derivedName) {
       defaults.name = derivedName;
     }
 
     const derivedEmail =
-      profile?.email ||
-      user.primaryEmailAddress?.emailAddress ||
-      user.emailAddresses?.[0]?.emailAddress;
+      profile?.email || user.email;
     if (derivedEmail) {
       defaults.email = derivedEmail;
     }

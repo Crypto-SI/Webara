@@ -5,7 +5,6 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { useSimpleAuth } from '@/contexts/auth-context-simple';
-import { useSupabaseClient } from '@/lib/supabase/client';
 import { getMyQuotesAction, type MyQuote, type QuoteStatus } from '@/app/actions';
 import {
   Card,
@@ -88,33 +87,10 @@ const formatQuoteEstimate = (quote: MyQuote) => {
 };
 
 function AccountPageContent() {
-  const { user } = useSimpleAuth();
+  const { user, profile } = useSimpleAuth();
   const [quotes, setQuotes] = useState<MyQuote[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [profile, setProfile] = useState<any>(null);
-
-  const supabase = useSupabaseClient();
-
-  useEffect(() => {
-    async function fetchProfile() {
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching profile:', error);
-      } else {
-        setProfile(data);
-      }
-    }
-
-    fetchProfile();
-  }, [user, supabase]);
 
   useEffect(() => {
     async function fetchQuotes() {
@@ -156,8 +132,8 @@ function AccountPageContent() {
              <h1 className="text-3xl font-bold tracking-tight">
                 Welcome back, {
                   profile?.full_name ||
-                  (user?.unsafeMetadata as { full_name?: string } | undefined)?.full_name ||
-                  user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] ||
+                  (typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : undefined) ||
+                  user?.email?.split('@')[0] ||
                   'User'
                 }!
               </h1>
@@ -246,7 +222,7 @@ function AccountPageContent() {
                      <div className="flex items-center gap-4">
                        <Mail className="h-5 w-5 text-muted-foreground" />
                        <span className="font-medium">
-                         {user?.emailAddresses?.[0]?.emailAddress || 'Not set'}
+                         {user?.email || 'Not set'}
                        </span>
                      </div>
                      <Separator />

@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { requireAuthenticatedProfile } from '@/lib/auth-server';
 
-// POST /api/quotes/[quoteId]/request-call
-// - Auth: must be logged in
-// - Ownership: quote.user_id must match current user
-// - Guard: quote.admin_feedback must be present
-// - Effect: set status = 'call_requested' if not already and return updated quote
 export async function POST(
   _req: Request,
   context: { params: Promise<{ quoteId: string }> }
@@ -19,22 +14,20 @@ export async function POST(
     );
   }
 
-  const supabase = createServerSupabaseClient();
+  let userId: string;
+  let supabase: Awaited<ReturnType<typeof requireAuthenticatedProfile>>['supabase'];
 
-  // Get current user
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  try {
+    const authContext = await requireAuthenticatedProfile();
+    userId = authContext.user.id;
+    supabase = authContext.supabase;
+  } catch {
     return NextResponse.json(
       { error: 'Unauthorized. Please sign in to request a call.' },
       { status: 401 }
     );
   }
 
-  // Fetch quote with ownership + admin_feedback check
   const { data: quote, error: quoteError } = await supabase
     .from('quotes')
     .select('id, user_id, status, admin_feedback')
@@ -48,7 +41,7 @@ export async function POST(
     );
   }
 
-  if ((quote as any).user_id !== user.id) {
+  if ((quote as any).user_id !== userId) {
     return NextResponse.json(
       { error: 'You are not allowed to request a call for this quote.' },
       { status: 403 }
@@ -69,7 +62,6 @@ export async function POST(
   }
 
   if ((quote as any).status === 'call_requested') {
-    // Idempotent: already requested
     return NextResponse.json(
       {
         quote: {
@@ -82,8 +74,6 @@ export async function POST(
     );
   }
 
-  // Update quote.status to call_requested
-  // Update via a raw SQL call to avoid TS inference issues with generated types
   const { data: updated, error: updateError } = await supabase
     .from('quotes')
     .update({ status: 'call_requested' } as never)

@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ProtectedRoute } from '@/components/auth/protected-route';
-import { useSimpleAuth, SimpleAuthProvider } from '@/contexts/auth-context-simple';
+import { useSimpleAuth } from '@/contexts/auth-context-simple';
 import { Logo } from '@/components/logo';
 import type { Database } from '@/lib/database.types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -49,7 +48,6 @@ import {
 import { UsersWithProposals } from '@/components/admin/users-with-proposals';
 import { UserDashboardSimple } from '@/components/profile/user-dashboard-simple';
 import { AdminPanelSimple } from '@/components/profile/admin-panel-simple';
-import { UserProfile as ClerkUserProfile } from '@clerk/nextjs';
 import { cn } from '@/lib/utils';
 
 type ProfileRow = Database['public']['Tables']['profiles']['Row'];
@@ -173,8 +171,8 @@ function ProfileContent() {
               <h1 className="text-3xl font-bold tracking-tight">
                 {
                   profile?.full_name ||
-                    (user?.unsafeMetadata as { full_name?: string } | undefined)?.full_name ||
-                    user?.emailAddresses?.[0]?.emailAddress ||
+                    (typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : undefined) ||
+                    user?.email ||
                     'Profile'
                 }
               </h1>
@@ -281,10 +279,24 @@ function ProfileContent() {
           <Card>
             <CardHeader>
               <CardTitle>Account Settings</CardTitle>
-              <CardDescription>Manage your Clerk profile information.</CardDescription>
+              <CardDescription>Manage your Webara account information.</CardDescription>
             </CardHeader>
-            <CardContent className="px-0 md:px-6">
-              <ClerkUserProfile routing="hash" />
+            <CardContent className="space-y-3">
+              <div className="rounded-md border p-4">
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium">{user?.email || profile?.email || 'Not set'}</p>
+              </div>
+              <div className="rounded-md border p-4">
+                <p className="text-sm text-muted-foreground">Role</p>
+                <p className="font-medium">{profile?.role || 'user'}</p>
+              </div>
+              <div className="rounded-md border p-4">
+                <p className="text-sm text-muted-foreground">Profile Updates</p>
+                <p className="text-sm">
+                  Self-service profile editing is not wired yet in this dashboard. Core auth and
+                  account access now run through Supabase Auth.
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>

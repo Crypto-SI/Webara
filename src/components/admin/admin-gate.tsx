@@ -11,20 +11,16 @@ type AdminGateProps = {
 };
 
 export function AdminGate({ children }: AdminGateProps) {
-  const { user, loading, profile, refreshProfile } = useSimpleAuth();
+  const { user, loading, isAdmin, refreshProfile } = useSimpleAuth();
   const router = useRouter();
-  const profileRole = profile?.role?.toLowerCase();
-  const userRole = (user?.unsafeMetadata?.role as string | undefined)?.toLowerCase();
-  const appRole = (user?.publicMetadata?.role as string | undefined)?.toLowerCase();
-  const isAdmin = profileRole === 'admin' || userRole === 'admin' || appRole === 'admin';
   const attemptedRefreshRef = useRef(false);
 
   useEffect(() => {
-    if (user && !profile && !loading && !attemptedRefreshRef.current) {
+    if (user && !isAdmin && !loading && !attemptedRefreshRef.current) {
       attemptedRefreshRef.current = true;
       void refreshProfile();
     }
-  }, [user, profile, loading, refreshProfile]);
+  }, [user, isAdmin, loading, refreshProfile]);
 
   useEffect(() => {
     if (loading) return;

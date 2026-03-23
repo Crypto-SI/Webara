@@ -1,9 +1,10 @@
 'use client';
 
-// src/app/login/page.tsx
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
-import { SignIn } from '@clerk/nextjs';
+import { useSimpleAuth } from '@/contexts/auth-context-simple';
 import {
   Card,
   CardContent,
@@ -11,18 +12,61 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useEffect, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
-// NOTE: metadata export removed because this is a client component using Clerk.
-// Define metadata in a server layout for (auth) if SEO control is needed.
+async function syncProfileAfterLogin() {
+  const response = await fetch('/api/auth/profile-sync', {
+    method: 'POST',
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const body = (await response.json()) as {
+    profile?: { role?: string | null } | null;
+  };
+  return body.profile ?? null;
+}
 
 export default function LoginPage() {
-  const [isClient, setIsClient] = useState(false);
+  const { signIn } = useSimpleAuth();
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    setIsClient(true);
-    console.log('LoginPage: Component mounted on client');
-  }, []);
+  const redirect =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('redirect') || '/profile'
+      : '/profile';
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    const result = await signIn(email, password);
+
+    if (result.error) {
+      setError(result.error.message);
+      setIsSubmitting(false);
+      return;
+    }
+
+    const profile = await syncProfileAfterLogin();
+    const destination =
+      profile?.role === 'admin' || profile?.role === 'webara_staff'
+        ? '/admin'
+        : redirect;
+
+    router.replace(destination);
+    router.refresh();
+  };
 
   return (
     <div className="page-shell">
@@ -32,15 +76,37 @@ export default function LoginPage() {
           <CardHeader>
             <CardTitle className="text-2xl">Login</CardTitle>
             <CardDescription>
-              Enter your email below to login to your account
+              Sign in with your Supabase-backed Webara account.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex justify-center">
-            {isClient ? (
-              <SignIn routing="hash" />
-            ) : (
-              <div className="w-full h-32 bg-gray-100 animate-pulse rounded-lg" />
-            )}
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Input
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+              />
+              <Input
+                type="password"
+                autoComplete="current-password"
+                placeholder="Password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+              {error ? (
+                <p className="text-sm text-destructive">{error}</p>
+              ) : null}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Signing In...' : 'Sign In'}
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Need an account? <Link href="/signup" className="underline">Create one</Link>
+              </p>
+            </form>
           </CardContent>
         </Card>
       </main>

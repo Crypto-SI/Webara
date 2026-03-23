@@ -1,8 +1,10 @@
 'use client';
 
-import { RedirectToSignIn, useUser } from '@clerk/nextjs';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useSimpleAuth } from '@/contexts/auth-context-simple';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,9 +21,17 @@ export function ProtectedRoute({
   requireAdmin = false,
   adminFallback,
 }: ProtectedRouteProps) {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { loading, user, isAdmin } = useSimpleAuth();
+  const router = useRouter();
 
-  if (!isLoaded) {
+  useEffect(() => {
+    if (loading || user) return;
+    const redirectUrl =
+      redirectTo ?? (typeof window !== 'undefined' ? window.location.pathname : '/');
+    router.replace(`/login?redirect=${encodeURIComponent(redirectUrl)}`);
+  }, [loading, redirectTo, router, user]);
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
@@ -32,15 +42,10 @@ export function ProtectedRoute({
     );
   }
 
-  if (!isSignedIn) {
-    const redirectUrl =
-      redirectTo ?? (typeof window !== 'undefined' ? window.location.pathname : '/');
+  if (!user) {
     if (fallback) return <>{fallback}</>;
-    return <RedirectToSignIn redirectUrl={redirectUrl} />;
+    return null;
   }
-
-  const role = (user.publicMetadata?.role as string | undefined)?.toLowerCase();
-  const isAdmin = role === 'admin' || role === 'webara_staff';
 
   if (requireAdmin && !isAdmin) {
     return (
