@@ -3,6 +3,7 @@ import { getAdminSupabaseContext } from '@/lib/admin-auth';
 import {
   normalizeAppStatus,
   normalizeSortOrder,
+  normalizeSupabaseDashboardUrl,
   normalizeWebsiteUrl,
   slugifyAppName,
 } from '@/lib/apps';
@@ -60,6 +61,7 @@ export async function PATCH(
     }
 
     const websiteUrl = normalizeWebsiteUrl(body.website_url);
+    const supabaseDashboardUrl = normalizeSupabaseDashboardUrl(body.supabase_dashboard_url);
     const description =
       typeof body.description === 'string' && body.description.trim().length > 0
         ? body.description.trim()
@@ -74,6 +76,7 @@ export async function PATCH(
         name,
         slug,
         website_url: websiteUrl,
+        supabase_dashboard_url: supabaseDashboardUrl,
         description,
         status,
         sort_order: sortOrder,

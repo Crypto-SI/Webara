@@ -15,6 +15,7 @@ export interface Database {
           name: string
           slug: string
           website_url: string | null
+          supabase_dashboard_url: string | null
           description: string | null
           status: 'active' | 'planning' | 'archived'
           sort_order: number
@@ -28,6 +29,7 @@ export interface Database {
           name: string
           slug: string
           website_url?: string | null
+          supabase_dashboard_url?: string | null
           description?: string | null
           status?: 'active' | 'planning' | 'archived'
           sort_order?: number
@@ -41,6 +43,7 @@ export interface Database {
           name?: string
           slug?: string
           website_url?: string | null
+          supabase_dashboard_url?: string | null
           description?: string | null
           status?: 'active' | 'planning' | 'archived'
           sort_order?: number

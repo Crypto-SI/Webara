@@ -15,6 +15,14 @@ export function slugifyAppName(name: string) {
 }
 
 export function normalizeWebsiteUrl(value: unknown) {
+  return normalizeOptionalUrl(value, 'Website URL');
+}
+
+export function normalizeSupabaseDashboardUrl(value: unknown) {
+  return normalizeOptionalUrl(value, 'Supabase dashboard URL');
+}
+
+function normalizeOptionalUrl(value: unknown, label: string) {
   const raw = typeof value === 'string' ? value.trim() : '';
   if (!raw) return null;
 
@@ -23,7 +31,7 @@ export function normalizeWebsiteUrl(value: unknown) {
   try {
     return new URL(candidate).toString();
   } catch {
-    throw new Error('Website URL must be a valid URL.');
+    throw new Error(`${label} must be a valid URL.`);
   }
 }
 

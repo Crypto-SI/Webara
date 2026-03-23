@@ -34,6 +34,7 @@ import type { AppRow } from './types';
 type AppInput = {
   name: string;
   website_url: string;
+  supabase_dashboard_url: string;
   description: string;
   status: AppStatus;
   sort_order: number;
@@ -55,6 +56,7 @@ const statusClasses: Record<AppStatus, string> = {
 const defaultFormState: AppInput = {
   name: '',
   website_url: '',
+  supabase_dashboard_url: '',
   description: '',
   status: 'active',
   sort_order: 0,
@@ -86,6 +88,7 @@ export function AppsCard({ apps, isLoading, onCreateApp, onUpdateApp }: AppsCard
     setForm({
       name: editingApp.name,
       website_url: editingApp.website_url ?? '',
+      supabase_dashboard_url: editingApp.supabase_dashboard_url ?? '',
       description: editingApp.description ?? '',
       status: editingApp.status,
       sort_order: editingApp.sort_order,
@@ -165,13 +168,14 @@ export function AppsCard({ apps, isLoading, onCreateApp, onUpdateApp }: AppsCard
         </CardHeader>
         <CardContent className="table-scroll-x">
           {isLoading ? (
-            <LoadingTablePlaceholder rows={5} columns={5} />
+            <LoadingTablePlaceholder rows={5} columns={6} />
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>App</TableHead>
                   <TableHead>Website</TableHead>
+                  <TableHead>Supabase</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Updated</TableHead>
                   <TableHead className="w-[110px]">Actions</TableHead>
@@ -180,7 +184,7 @@ export function AppsCard({ apps, isLoading, onCreateApp, onUpdateApp }: AppsCard
               <TableBody>
                 {sortedApps.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-sm text-muted-foreground">
+                    <TableCell colSpan={6} className="text-sm text-muted-foreground">
                       No apps added yet.
                     </TableCell>
                   </TableRow>
@@ -213,6 +217,21 @@ export function AppsCard({ apps, isLoading, onCreateApp, onUpdateApp }: AppsCard
                           </a>
                         ) : (
                           <span className="text-sm text-muted-foreground">No website</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {app.supabase_dashboard_url ? (
+                          <a
+                            href={app.supabase_dashboard_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
+                          >
+                            Open dashboard
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">No dashboard</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -269,6 +288,21 @@ export function AppsCard({ apps, isLoading, onCreateApp, onUpdateApp }: AppsCard
                   setForm((current) => ({ ...current, website_url: event.target.value }))
                 }
                 placeholder="https://example.com"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="app-supabase-dashboard">Supabase Dashboard URL</Label>
+              <Input
+                id="app-supabase-dashboard"
+                value={form.supabase_dashboard_url}
+                onChange={(event) =>
+                  setForm((current) => ({
+                    ...current,
+                    supabase_dashboard_url: event.target.value,
+                  }))
+                }
+                placeholder="https://supabase.com/dashboard/project/your-project-ref"
               />
             </div>
 

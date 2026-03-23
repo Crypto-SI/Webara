@@ -42,6 +42,7 @@ export function AdminDashboard() {
     async (input: {
       name: string;
       website_url: string;
+      supabase_dashboard_url: string;
       description: string;
       status: AppRow['status'];
       sort_order: number;
@@ -73,6 +74,7 @@ export function AdminDashboard() {
       input: {
         name: string;
         website_url: string;
+        supabase_dashboard_url: string;
         description: string;
         status: AppRow['status'];
         sort_order: number;
