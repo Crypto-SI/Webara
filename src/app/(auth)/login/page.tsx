@@ -15,7 +15,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 async function syncProfileAfterLogin(accessToken?: string | null) {
   const response = await fetch('/api/auth/profile-sync', {
@@ -60,11 +59,7 @@ export default function LoginPage() {
       return;
     }
 
-    const {
-      data: { session },
-    } = await createBrowserSupabaseClient().auth.getSession();
-
-    const profile = await syncProfileAfterLogin(session?.access_token);
+    const profile = await syncProfileAfterLogin(result.session?.access_token);
     const destination =
       profile?.role === 'admin' || profile?.role === 'webara_staff'
         ? '/admin'

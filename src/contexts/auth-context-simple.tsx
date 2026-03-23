@@ -32,7 +32,7 @@ interface SimpleAuthContextType extends SimpleAuthState {
   signIn: (
     email?: string,
     password?: string
-  ) => Promise<{ error: Error | null }>;
+  ) => Promise<{ error: Error | null; session: Session | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -189,15 +189,15 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       signIn: async (email, password) => {
         if (!email || !password) {
-          return { error: new Error('Email and password are required.') };
+          return { error: new Error('Email and password are required.'), session: null };
         }
 
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        return { error: error ?? null };
+        return { error: error ?? null, session: data.session ?? null };
       },
       signUp: async (email, password, metadata) => {
         if (!email || !password) {

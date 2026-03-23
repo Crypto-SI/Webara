@@ -19,6 +19,11 @@ function deriveRole(user: User, matchingProfiles: ProfileRow[]): ProfileRow['rol
     return profileRole;
   }
 
+  const metadataRole = String(user.user_metadata?.role ?? user.app_metadata?.role ?? '').toLowerCase();
+  if (metadataRole === 'admin' || metadataRole === 'webara_staff') {
+    return metadataRole;
+  }
+
   return 'user';
 }
 
