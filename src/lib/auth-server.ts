@@ -240,6 +240,24 @@ export async function syncProfileForAuthUser(
 }
 
 export async function requireAuthenticatedUser() {
+  return requireAuthenticatedUserFromRequest();
+}
+
+export async function requireAuthenticatedUserFromRequest(request?: Request) {
+  const bearerToken = request?.headers.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+
+  if (bearerToken) {
+    const admin = createAdminSupabaseClient();
+    const {
+      data: { user },
+      error,
+    } = await admin.auth.getUser(bearerToken);
+
+    if (!error && user) {
+      return user;
+    }
+  }
+
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -254,7 +272,11 @@ export async function requireAuthenticatedUser() {
 }
 
 export async function requireAuthenticatedProfile() {
-  const user = await requireAuthenticatedUser();
+  return requireAuthenticatedProfileFromRequest();
+}
+
+export async function requireAuthenticatedProfileFromRequest(request?: Request) {
+  const user = await requireAuthenticatedUserFromRequest(request);
   const admin = createAdminSupabaseClient();
   const profile = await syncProfileForAuthUser(user, admin);
   return { user, profile, supabase: admin };

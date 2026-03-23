@@ -39,21 +39,30 @@ interface SimpleAuthContextType extends SimpleAuthState {
 
 const SimpleAuthContext = createContext<SimpleAuthContextType | undefined>(undefined);
 
-async function syncProfile() {
+async function syncProfileWithSession(accessToken?: string | null, retries = 1) {
   const response = await fetch('/api/auth/profile-sync', {
     method: 'POST',
     cache: 'no-store',
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
   });
 
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as
-      | { error?: string }
-      | null;
-    throw new Error(body?.error || 'Failed to sync profile.');
+  if (response.ok) {
+    const body = (await response.json()) as { profile: ProfileRow | null };
+    return body.profile ?? null;
   }
 
-  const body = (await response.json()) as { profile: ProfileRow | null };
-  return body.profile ?? null;
+  const body = (await response.json().catch(() => null)) as
+    | { error?: string }
+    | null;
+  const message = body?.error || 'Failed to sync profile.';
+
+  // Supabase SSR cookies can lag briefly behind the browser session after auth changes.
+  if (retries > 0 && message === 'Unauthorized') {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    return syncProfileWithSession(accessToken, retries - 1);
+  }
+
+  throw new Error(message);
 }
 
 export function useSimpleAuth() {
@@ -84,9 +93,9 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
     }
 
     setUser(currentUser);
-    const nextProfile = await syncProfile();
+    const nextProfile = await syncProfileWithSession(session?.access_token);
     setProfile(nextProfile);
-  }, [supabase]);
+  }, [session?.access_token, supabase]);
 
   useEffect(() => {
     let mounted = true;
@@ -108,7 +117,7 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
         setUser(nextUser ?? null);
 
         if (nextUser) {
-          const nextProfile = await syncProfile();
+          const nextProfile = await syncProfileWithSession(nextSession?.access_token);
           if (mounted) {
             setProfile(nextProfile);
           }
@@ -145,7 +154,7 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
         }
 
         try {
-          const nextProfile = await syncProfile();
+          const nextProfile = await syncProfileWithSession(nextSession.access_token);
           if (mounted) {
             setProfile(nextProfile);
           }

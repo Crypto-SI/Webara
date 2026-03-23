@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { requireAuthenticatedProfile } from '@/lib/auth-server';
+import { requireAuthenticatedProfileFromRequest } from '@/lib/auth-server';
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
-    const { profile } = await requireAuthenticatedProfile();
+    const { profile } = await requireAuthenticatedProfileFromRequest(request);
     return NextResponse.json({ profile });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected error';
