@@ -144,7 +144,7 @@ if (result.success) {
 ### 4. Admin Test Profile Suite
 
 1. On the admin dashboard, locate the **Admin Test Suite** card under the Clerk sync panel.
-2. The card shows the hard-coded QA credentials (`info@webarastudio.com` / `Alphabet_chicken123!@#`).
+2. The card references the QA test profile and expects credentials to come from environment-backed tooling, not hard-coded source values.
 3. Press **Create / Sync Test Profile** to provision the user in Clerk, upsert the Supabase profile, and auto-seed a sample business plus two representative quotes.
 4. Use **Refresh Status** to verify presence in both systems and confirm the seeded data counts (badges update in real time).
 5. Press **Clear Test Profile** to delete the Clerk user and cascade-delete the Supabase profile, quotes, and businesses tied to it.

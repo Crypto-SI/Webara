@@ -12,12 +12,16 @@ if (!supabaseUrl || !supabaseServiceKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const dummyUserPassword = process.env.DUMMY_USER_PASSWORD;
+
+if (!dummyUserPassword) {
+  throw new Error('Missing DUMMY_USER_PASSWORD in environment');
+}
 
 // Dummy user data
 const dummyUsers = [
   {
     email: 'sarah.johnson@techflow.com',
-    password: 'DummyUser123!',
     fullName: 'Sarah Johnson',
     phone: '+1-555-0123',
     role: 'user' as const,
@@ -52,7 +56,6 @@ const dummyUsers = [
   },
   {
     email: 'michael.chen@greenleaf.com',
-    password: 'DummyUser123!',
     fullName: 'Michael Chen',
     phone: '+1-555-0124',
     role: 'user' as const,
@@ -78,7 +81,6 @@ const dummyUsers = [
   },
   {
     email: 'emily.rodriguez@creativeminds.com',
-    password: 'DummyUser123!',
     fullName: 'Emily Rodriguez',
     phone: '+1-555-0125',
     role: 'user' as const,
@@ -123,7 +125,7 @@ async function createDummyData() {
       // 1. Create user in auth
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: userData.email,
-        password: userData.password,
+        password: dummyUserPassword,
         email_confirm: true,
         user_metadata: {
           full_name: userData.fullName,
@@ -223,7 +225,7 @@ async function createDummyData() {
     
     console.log('\n🔑 Login credentials:');
     dummyUsers.forEach(user => {
-      console.log(`- ${user.email}: ${user.password}`);
+      console.log(`- ${user.email}: [from DUMMY_USER_PASSWORD env]`);
     });
 
   } catch (error) {

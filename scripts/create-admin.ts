@@ -15,7 +15,11 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 async function createAdminUser() {
   const email = 'cryptosi@protonmail.com';
-  const password = 'Talent81';
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!password) {
+    throw new Error('Missing ADMIN_PASSWORD in environment');
+  }
 
   try {
     console.log('Creating admin user...');
@@ -59,7 +63,7 @@ async function createAdminUser() {
 
     console.log('✅ Admin user created successfully!');
     console.log(`Email: ${email}`);
-    console.log(`Password: ${password}`);
+    console.log('Password: [from ADMIN_PASSWORD env]');
     console.log('Role: admin');
 
   } catch (error) {

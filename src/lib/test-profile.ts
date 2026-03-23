@@ -1,9 +1,15 @@
+const testProfilePassword = process.env.TEST_PROFILE_PASSWORD;
+
+if (!testProfilePassword) {
+  throw new Error('Missing TEST_PROFILE_PASSWORD for test profile tooling');
+}
+
 export const TEST_PROFILE = {
   email: 'info@webarastudio.com',
   name: 'Joe Bloggs',
   firstName: 'Joe',
   lastName: 'Bloggs',
-  password: 'Alphabet_chicken123!@#',
+  password: testProfilePassword,
   role: 'webara_staff' as const,
   metadata: {
     role: 'webara_staff',
