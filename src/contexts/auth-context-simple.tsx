@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
+
 import type { Database } from '@/lib/database.types';
 import { useSupabaseClient } from '@/lib/supabase/client';
 
@@ -37,7 +38,13 @@ interface SimpleAuthContextType extends SimpleAuthState {
   refreshProfile: () => Promise<void>;
 }
 
-const SimpleAuthContext = createContext<SimpleAuthContextType | undefined>(undefined);
+const SimpleAuthContext = createContext<SimpleAuthContextType | undefined>(
+  undefined
+);
+
+const missingSupabaseError = new Error(
+  'Authentication is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable auth.'
+);
 
 async function syncProfileWithSession(accessToken?: string | null, retries = 1) {
   const response = await fetch('/api/auth/profile-sync', {
@@ -56,7 +63,6 @@ async function syncProfileWithSession(accessToken?: string | null, retries = 1) 
     | null;
   const message = body?.error || 'Failed to sync profile.';
 
-  // Supabase SSR cookies can lag briefly behind the browser session after auth changes.
   if (retries > 0 && message === 'Unauthorized') {
     await new Promise((resolve) => setTimeout(resolve, 150));
     return syncProfileWithSession(accessToken, retries - 1);
@@ -81,6 +87,13 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refreshProfile = useCallback(async () => {
+    if (!supabase) {
+      setUser(null);
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
+
     const {
       data: { user: currentUser },
       error,
@@ -98,6 +111,11 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
   }, [session?.access_token, supabase]);
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     let mounted = true;
 
     const initialize = async () => {
@@ -177,8 +195,7 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
     };
   }, [supabase]);
 
-  const isAdmin =
-    profile?.role === 'admin' || profile?.role === 'webara_staff';
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'webara_staff';
 
   const value = useMemo<SimpleAuthContextType>(
     () => ({
@@ -189,7 +206,13 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       signIn: async (email, password) => {
         if (!email || !password) {
-          return { error: new Error('Email and password are required.'), session: null };
+          return {
+            error: new Error('Email and password are required.'),
+            session: null,
+          };
+        }
+        if (!supabase) {
+          return { error: missingSupabaseError, session: null };
         }
 
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -202,6 +225,9 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
       signUp: async (email, password, metadata) => {
         if (!email || !password) {
           return { error: new Error('Email and password are required.') };
+        }
+        if (!supabase) {
+          return { error: missingSupabaseError };
         }
 
         const { data, error } = await supabase.auth.signUp({
@@ -216,6 +242,13 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
         };
       },
       signOut: async () => {
+        if (!supabase) {
+          setUser(null);
+          setSession(null);
+          setProfile(null);
+          return;
+        }
+
         const { error } = await supabase.auth.signOut();
         if (error) {
           throw error;
@@ -230,9 +263,7 @@ export function SimpleAuthProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <SimpleAuthContext.Provider value={value}>
-      {children}
-    </SimpleAuthContext.Provider>
+    <SimpleAuthContext.Provider value={value}>{children}</SimpleAuthContext.Provider>
   );
 }
 
