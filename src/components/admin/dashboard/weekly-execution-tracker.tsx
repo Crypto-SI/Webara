@@ -1,30 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { format, startOfWeek } from 'date-fns';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
-
-type ChecklistItem = {
-  id: string;
-  week_start_date: string;
-  task_key: string;
-  task_label: string;
-  platform: string;
-  day_of_week: number;
-  completed: boolean;
-};
-
-type WeeklySummary = {
-  id: string;
-  week_start_date: string;
-  total_tasks: number;
-  completed_tasks: number;
-  completion_rate: number;
-  committed_at: string;
-};
+import { Progress } from '@/components/ui/progress';
+import { Download, FileText, Loader2 } from 'lucide-react';
+import type { ChecklistItem, WeeklySummary, ReportData } from '@/types/weekly-tracker';
 
 type ApiState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -52,14 +36,14 @@ const TASK_DEFINITIONS: {
 
   // Monday – Instagram
   { key: 'mon_ig_post', label: 'Instagram: Post strong Webara layout or before-and-after', platform: 'instagram', day_of_week: 1 },
-  { key: 'mon_ig_story_plan', label: 'Instagram: Story “This week we’re working on...” with link', platform: 'instagram', day_of_week: 1 },
+  { key: 'mon_ig_story_plan', label: 'Instagram: Story "This week we\'re working on..." with link', platform: 'instagram', day_of_week: 1 },
 
   // Monday – X
   { key: 'mon_x_posts', label: 'X: Publish 1–2 short insight tweets', platform: 'x', day_of_week: 1 },
   { key: 'mon_x_replies', label: 'X: Reply to 3–5 relevant tweets with meaningful input', platform: 'x', day_of_week: 1 },
 
   // Monday – YouTube
-  { key: 'mon_yt_topic', label: 'YouTube: Choose topic and outline this week’s main video', platform: 'youtube', day_of_week: 1 },
+  { key: 'mon_yt_topic', label: 'YouTube: Choose topic and outline this week\'s main video', platform: 'youtube', day_of_week: 1 },
   { key: 'mon_yt_assets', label: 'YouTube: Confirm recording slot and required assets', platform: 'youtube', day_of_week: 1 },
 
   // Monday – Ads
@@ -78,7 +62,7 @@ const TASK_DEFINITIONS: {
   { key: 'tue_x_posts', label: 'X: 1–2 tweets with micro-lessons or strong opinions', platform: 'x', day_of_week: 2 },
 
   // Tuesday – YouTube
-  { key: 'tue_yt_outline', label: 'YouTube: Finalize script/outline and screens for this week’s video', platform: 'youtube', day_of_week: 2 },
+  { key: 'tue_yt_outline', label: 'YouTube: Finalize script/outline and screens for this week\'s video', platform: 'youtube', day_of_week: 2 },
 
   // Tuesday – Ads
   { key: 'tue_ads_ideas', label: 'Ads: Capture creative ideas from best-performing organic content', platform: 'ads', day_of_week: 2 },
@@ -137,7 +121,7 @@ const TASK_DEFINITIONS: {
   { key: 'fri_ads_review', label: 'Ads: Review CTR, CPL, conversions, lead quality', platform: 'ads', day_of_week: 5 },
   { key: 'fri_ads_pause', label: 'Ads: Pause worst performers', platform: 'ads', day_of_week: 5 },
   { key: 'fri_ads_reallocate', label: 'Ads: Reallocate budget to top performers', platform: 'ads', day_of_week: 5 },
-  { key: 'fri_ads_plan', label: 'Ads: Decide next week’s focus and experiments', platform: 'ads', day_of_week: 5 },
+  { key: 'fri_ads_plan', label: 'Ads: Decide next week\'s focus and experiments', platform: 'ads', day_of_week: 5 },
 
   // Saturday (optional / light)
   { key: 'sat_ig_story', label: 'Instagram: Optional BTS / culture / casual Story', platform: 'instagram', day_of_week: 6 },
@@ -148,10 +132,10 @@ const TASK_DEFINITIONS: {
   { key: 'sun_review_leads', label: 'Review total leads and opportunities', platform: 'analytics', day_of_week: 7 },
   { key: 'sun_review_conversions', label: 'Review conversion rate on key forms', platform: 'analytics', day_of_week: 7 },
   { key: 'sun_review_top_content', label: 'Identify top-performing posts, videos, and ads', platform: 'analytics', day_of_week: 7 },
-  { key: 'sun_define_theme', label: 'Define next week’s primary content theme', platform: 'planning', day_of_week: 7 },
-  { key: 'sun_define_offer', label: 'Define next week’s main offer / CTA', platform: 'planning', day_of_week: 7 },
-  { key: 'sun_define_yt', label: 'Define next week’s YouTube topic(s)', platform: 'planning', day_of_week: 7 },
-  { key: 'sun_outline_li', label: 'Outline next week’s LinkedIn posts & talking points', platform: 'planning', day_of_week: 7 },
+  { key: 'sun_define_theme', label: 'Define next week\'s primary content theme', platform: 'planning', day_of_week: 7 },
+  { key: 'sun_define_offer', label: 'Define next week\'s main offer / CTA', platform: 'planning', day_of_week: 7 },
+  { key: 'sun_define_yt', label: 'Define next week\'s YouTube topic(s)', platform: 'planning', day_of_week: 7 },
+  { key: 'sun_outline_li', label: 'Outline next week\'s LinkedIn posts & talking points', platform: 'planning', day_of_week: 7 },
   { key: 'sun_capture_ideas', label: 'Capture ideas for new landing pages / experiments / offers', platform: 'planning', day_of_week: 7 },
 ];
 
@@ -188,10 +172,19 @@ export function WeeklyExecutionTracker() {
   const [localCompletion, setLocalCompletion] = useState<Record<string, boolean>>({});
   const [storageHydrated, setStorageHydrated] = useState(false);
   const [committing, setCommitting] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null);
+  const pendingToggles = useRef<Set<string>>(new Set());
+  const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const weekStart = useMemo(() => getCurrentWeekStartISO(), []);
+  const lastWeekStart = useMemo(() => {
+    const d = new Date(weekStart + 'T00:00:00.000Z');
+    d.setUTCDate(d.getUTCDate() - 7);
+    return d.toISOString().slice(0, 10);
+  }, [weekStart]);
   const storageKey = useMemo(() => `weekly-execution-tracker:${weekStart}`, [weekStart]);
 
+  // Hydrate from localStorage on mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -204,6 +197,7 @@ export function WeeklyExecutionTracker() {
     }
   }, [storageKey]);
 
+  // Persist to localStorage when localCompletion changes
   useEffect(() => {
     if (!storageHydrated || typeof window === 'undefined') return;
     try {
@@ -212,6 +206,13 @@ export function WeeklyExecutionTracker() {
       console.error('Failed to persist weekly tracker progress', e);
     }
   }, [localCompletion, storageHydrated, storageKey]);
+
+  // Cleanup error auto-clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+    };
+  }, []);
 
   const resolvedItems = useMemo(() => {
     if (!data) return [] as ChecklistItem[];
@@ -256,10 +257,47 @@ export function WeeklyExecutionTracker() {
     void load();
   }, [weekStart]);
 
-  const handleToggle = (item: ChecklistItem, nextCompleted: boolean) => {
+  // Toggle handler with real-time Supabase persistence
+  const handleToggle = useCallback(async (item: ChecklistItem, nextCompleted: boolean) => {
     if (isCommitted || item.completed === nextCompleted) return;
+
+    // Prevent duplicate in-flight toggles for the same item (guard BEFORE optimistic update)
+    if (pendingToggles.current.has(item.id)) return;
+    pendingToggles.current.add(item.id);
+
+    // Optimistic UI update
     setLocalCompletion(prev => ({ ...prev, [item.task_key]: nextCompleted }));
-  };
+
+    try {
+      const res = await fetch('/api/admin/weekly-tracker/item', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id, completed: nextCompleted }),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errBody.error || `Failed to persist toggle (${res.status})`);
+      }
+    } catch (e: any) {
+      console.error('Failed to persist toggle to Supabase:', e.message);
+      // Revert optimistic update on failure
+      setLocalCompletion(prev => {
+        const next = { ...prev };
+        // Only revert if the value hasn't been changed again by another toggle
+        if (next[item.task_key] === nextCompleted) {
+          delete next[item.task_key];
+        }
+        return next;
+      });
+      setError(`Failed to save task state: ${e.message}`);
+      // Auto-clear error after 5 seconds
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+      errorTimeoutRef.current = setTimeout(() => setError(null), 5000);
+    } finally {
+      pendingToggles.current.delete(item.id);
+    }
+  }, [isCommitted]);
 
   const handleCommitWeek = async () => {
     if (isCommitted) return;
@@ -313,6 +351,35 @@ export function WeeklyExecutionTracker() {
     return { completed, total: resolvedItems.length };
   }, [resolvedItems]);
 
+  // PDF download handler
+  const handleDownloadPdf = useCallback(async (weekStartDate?: string) => {
+    const targetWeek = weekStartDate || undefined;
+    const label = targetWeek || 'last week';
+    setDownloadingPdf(label);
+    setError(null);
+
+    try {
+      const params = new URLSearchParams();
+      if (targetWeek) params.set('weekStartDate', targetWeek);
+      const res = await fetch(`/api/admin/weekly-tracker/report?${params.toString()}`);
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errBody.error || `Failed to fetch report (${res.status})`);
+      }
+
+      const reportData: ReportData = await res.json();
+
+      // Dynamically import the PDF utility (client-side only)
+      const { downloadWeeklyReportPDF } = await import('@/lib/pdf/weekly-report');
+      downloadWeeklyReportPDF(reportData);
+    } catch (e: any) {
+      setError(`Failed to generate PDF: ${e.message}`);
+    } finally {
+      setDownloadingPdf(null);
+    }
+  }, []);
+
   return (
     <div className="space-y-4">
       {error && (
@@ -331,26 +398,49 @@ export function WeeklyExecutionTracker() {
               ? `${completion.completed} / ${completion.total} tasks completed`
               : 'Loading tasks for this week...'}
           </p>
+          {completion.total > 0 && !isCommitted && (
+            <Progress
+              value={(completion.completed / completion.total) * 100}
+              className="h-1.5 w-40"
+            />
+          )}
         </div>
         <div className="flex flex-col items-end gap-1">
-          <Button
-            size="sm"
-            variant={isCommitted ? 'outline' : 'default'}
-            disabled={
-              isCommitted ||
-              committing ||
-              loadingState !== 'success' ||
-              !data ||
-              data.items.length === 0
-            }
-            onClick={handleCommitWeek}
-          >
-            {isCommitted
-              ? 'Week Committed'
-              : committing
-              ? 'Committing...'
-              : 'Commit Week Summary'}
-          </Button>
+          <div className="flex gap-2">
+            {data?.recentSummaries?.some(s => s.week_start_date === lastWeekStart) && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={downloadingPdf !== null}
+                onClick={() => handleDownloadPdf(lastWeekStart)}
+              >
+                {downloadingPdf === lastWeekStart ? (
+                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                ) : (
+                  <Download className="mr-1 h-3 w-3" />
+                )}
+                Last Week PDF
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant={isCommitted ? 'outline' : 'default'}
+              disabled={
+                isCommitted ||
+                committing ||
+                loadingState !== 'success' ||
+                !data ||
+                data.items.length === 0
+              }
+              onClick={handleCommitWeek}
+            >
+              {isCommitted
+                ? 'Week Committed'
+                : committing
+                ? 'Committing...'
+                : 'Commit Week Summary'}
+            </Button>
+          </div>
           {isCommitted && data?.currentWeekSummary && (
             <span className="text-[10px] text-muted-foreground">
               Committed at {data.currentWeekSummary.committed_at}
@@ -402,20 +492,49 @@ export function WeeklyExecutionTracker() {
         </div>
       )}
 
+      {/* Enhanced Weekly History */}
       {loadingState === 'success' && data && data.recentSummaries && data.recentSummaries.length > 0 && (
-        <div className="space-y-1">
+        <div className="space-y-2">
           <p className="text-xs font-semibold text-muted-foreground">
-            Recent weeks
+            Previous Weeks
           </p>
-          <div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {data.recentSummaries.map((s) => (
-              <span
-                key={s.id}
-                className="rounded border px-2 py-1"
-              >
-                {s.week_start_date}: {s.completed_tasks}/{s.total_tasks} (
-                {s.completion_rate}%)
-              </span>
+              <Card key={s.id} className="border-muted/60">
+                <CardContent className="pt-3 pb-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold">
+                      {s.week_start_date}
+                    </span>
+                    <span className="text-xs font-bold text-muted-foreground">
+                      {s.completion_rate}%
+                    </span>
+                  </div>
+                  <Progress
+                    value={s.completion_rate}
+                    className="h-1.5"
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground">
+                      {s.completed_tasks}/{s.total_tasks} tasks
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-[10px]"
+                      disabled={downloadingPdf !== null}
+                      onClick={() => handleDownloadPdf(s.week_start_date)}
+                    >
+                      {downloadingPdf === s.week_start_date ? (
+                        <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      ) : (
+                        <FileText className="mr-1 h-3 w-3" />
+                      )}
+                      PDF
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
