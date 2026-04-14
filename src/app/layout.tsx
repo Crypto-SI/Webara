@@ -1,66 +1,57 @@
-// src/app/layout.tsx
 import type { Metadata } from 'next';
-import './globals.css';
+
 import { Toaster } from '@/components/ui/toaster';
-import { Poppins } from 'next/font/google';
+
+import './globals.css';
 import { ClientProviders } from './providers-client';
 
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700', '800', '900'],
-  display: 'swap',
-  variable: '--font-body',
-});
-
 export const metadata: Metadata = {
-  metadataBase: new URL('https://webarastudio.com'),
+  metadataBase: new URL('https://webaraforge.com'),
   title: {
-    default: 'Webara Studio | SaaS & B2B Product Partner',
-    template: '%s | Webara Studio',
+    default: 'Webara Forge | Startups are forged here',
+    template: '%s | Webara Forge',
   },
   description:
-    'Webara Studio co-builds SaaS and B2B products with transparent retainers, shared IP, and enterprise delivery—launch faster with a partner who ships.',
+    'Webara Forge is a selective hacker house and venture studio in Tema, Ghana. Build, validate, and ship in a high-pressure 14-week model.',
   alternates: {
-    canonical: 'https://webarastudio.com',
+    canonical: 'https://webaraforge.com',
   },
   robots: {
     index: true,
     follow: true,
   },
   keywords: [
-    'Webara Studio',
-    'web development agency',
-    'SaaS product design',
-    'Next.js experts',
-    'React development',
-    'B2B landing pages',
-    'startup product studio',
-    'collaborative product development',
+    'Webara Forge',
+    'hacker house Ghana',
+    'venture studio Ghana',
+    'startup accelerator Tema',
+    'startup talent Ghana',
+    'hackathon Ghana',
   ],
-  authors: [{ name: 'Webara Studio', url: 'https://webarastudio.com' }],
-  creator: 'Webara Studio',
-  publisher: 'Webara Studio',
+  authors: [{ name: 'Webara Forge', url: 'https://webaraforge.com' }],
+  creator: 'Webara Forge',
+  publisher: 'Webara Forge',
   openGraph: {
     type: 'website',
-    url: 'https://webarastudio.com',
-    title: 'Webara Studio | SaaS & B2B Product Partner',
+    url: 'https://webaraforge.com',
+    title: 'Webara Forge | Startups are forged here',
     description:
-      'Co-create modern, performant web apps and marketing sites. Transparent retainers, shared IP, and results-focused builds.',
-    siteName: 'Webara Studio',
+      'A selective hacker house and venture studio documenting cohorts, projects, members, and proof of output.',
+    siteName: 'Webara Forge',
     images: [
       {
         url: '/webarabadge.webp',
         width: 1200,
         height: 630,
-        alt: 'Webara Studio - Collaborative Digital Product Studio',
+        alt: 'Webara Forge',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Webara Studio | SaaS & B2B Product Partner',
+    title: 'Webara Forge | Startups are forged here',
     description:
-      'Webara Studio builds high-converting, performant web experiences in partnership with your team.',
+      'Selective 14-week venture studio cohorts in Tema, Ghana. Build under pressure and show proof of output.',
     images: ['/webarabadge.webp'],
   },
   icons: {
@@ -88,9 +79,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`!scroll-smooth ${poppins.variable}`}>
+    <html lang="en" className="!scroll-smooth">
       <head />
-      <body className={`font-body antialiased ${poppins.className}`}>
+      <body className="font-body antialiased">
         <ClientProviders>{children}</ClientProviders>
         <Toaster />
       </body>

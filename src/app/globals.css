@@ -4,57 +4,58 @@
 
 @layer base {
   :root {
-    --background: 200 25% 15%;
-    --foreground: 40 30% 85%;
-    --card: 200 25% 18%;
-    --card-foreground: 40 30% 85%;
-    --popover: 200 25% 12%;
-    --popover-foreground: 40 30% 85%;
-    --primary: 40 70% 60%;
-    --primary-foreground: 200 25% 10%;
-    --secondary: 200 15% 25%;
-    --secondary-foreground: 40 30% 85%;
-    --muted: 200 15% 25%;
-    --muted-foreground: 40 30% 75%;
-    --accent: 15 70% 50%;
+    --background: 0 0% 4%;
+    --foreground: 38 24% 88%;
+    --card: 0 0% 16%;
+    --card-foreground: 38 24% 88%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 38 24% 88%;
+    --primary: 38 50% 57%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 38 24% 88%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 38 12% 76%;
+    --accent: 11 62% 48%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
-    --border: 200 15% 30%;
-    --input: 200 15% 30%;
-    --ring: 40 70% 60%;
-    --chart-1: 40 70% 60%;
-    --chart-2: 15 70% 50%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 38 50% 57%;
+    --chart-1: 38 50% 57%;
+    --chart-2: 11 62% 48%;
+    --chart-3: 0 0% 25%;
+    --chart-4: 38 24% 88%;
+    --chart-5: 0 0% 32%;
     --radius: 0.5rem;
   }
+
   .dark {
-    --background: 200 25% 15%;
-    --foreground: 40 30% 85%;
-    --card: 200 25% 18%;
-    --card-foreground: 40 30% 85%;
-    --popover: 200 25% 12%;
-    --popover-foreground: 40 30% 85%;
-    --primary: 40 70% 60%;
-    --primary-foreground: 200 25% 10%;
-    --secondary: 200 15% 25%;
-    --secondary-foreground: 40 30% 85%;
-    --muted: 200 15% 25%;
-    --muted-foreground: 40 30% 75%;
-    --accent: 15 70% 50%;
+    --background: 0 0% 4%;
+    --foreground: 38 24% 88%;
+    --card: 0 0% 16%;
+    --card-foreground: 38 24% 88%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 38 24% 88%;
+    --primary: 38 50% 57%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 38 24% 88%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 38 12% 76%;
+    --accent: 11 62% 48%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 98%;
-    --border: 200 15% 30%;
-    --input: 200 15% 30%;
-    --ring: 40 70% 60%;
-    --chart-1: 40 70% 60%;
-    --chart-2: 15 70% 50%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 38 50% 57%;
+    --chart-1: 38 50% 57%;
+    --chart-2: 11 62% 48%;
+    --chart-3: 0 0% 25%;
+    --chart-4: 38 24% 88%;
+    --chart-5: 0 0% 32%;
   }
 }
 
@@ -67,7 +68,6 @@
     font-family: var(--font-body), system-ui, -apple-system, sans-serif;
   }
 
-  /* Improve mobile scrolling + safe area */
   html,
   body {
     min-height: 100%;
@@ -85,52 +85,46 @@
   }
 
   .page-main {
-    @apply flex-1 w-full;
+    @apply w-full flex-1;
   }
 
   .page-main-centered {
-    @apply flex-1 flex items-center justify-center px-4 py-6 sm:px-6;
+    @apply flex flex-1 items-center justify-center px-4 py-6 sm:px-6;
   }
 
   .page-card-auth {
-    @apply w-full max-w-sm mx-auto;
+    @apply mx-auto w-full max-w-sm;
   }
 
-  /* Ensures cards and grids don’t overflow on small screens */
   .responsive-card {
     @apply w-full max-w-full overflow-hidden;
   }
 
   .responsive-grid-2-4 {
-    @apply grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4;
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4;
   }
 
   .responsive-grid-1-3 {
-    @apply grid gap-6 grid-cols-1 lg:grid-cols-3;
+    @apply grid grid-cols-1 gap-6 lg:grid-cols-3;
   }
 
-  /* Tables: horizontal scroll on narrow viewports */
   .table-scroll-x {
     @apply w-full overflow-x-auto;
   }
 
-  /* Dialogs & sheets: full width on mobile, constrained on desktop */
   .dialog-responsive {
-    @apply w-full max-w-full sm:max-w-xl lg:max-w-4xl max-h-[90vh] p-4 sm:p-6 md:p-8;
+    @apply max-h-[90vh] w-full max-w-full p-4 sm:max-w-xl sm:p-6 md:p-8 lg:max-w-4xl;
   }
 
   .sheet-responsive {
     @apply w-[85vw] max-w-sm;
   }
 
-  /* Utility to prevent text from hitting edges on small screens */
   .section-px {
     @apply px-4 sm:px-6;
   }
-}
 
-@layer components {
   .carousel-nav-button {
-      @apply bg-background/50 border-border text-foreground/50 hover:bg-background hover:text-foreground hover:border-primary;
+    @apply border-border bg-background/50 text-foreground/50 hover:border-primary hover:bg-background hover:text-foreground;
   }
 }

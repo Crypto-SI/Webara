@@ -36,7 +36,7 @@ export function Logo({
     >
       <Image
         src={logoByVariant[variant]}
-        alt="Webara Studio"
+        alt="Webara Forge"
         width={160}
         height={42}
         sizes="160px"

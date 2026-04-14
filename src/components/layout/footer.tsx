@@ -1,33 +1,36 @@
+import Link from 'next/link';
 
 import { Logo } from '@/components/logo';
-import Link from 'next/link';
+import { utilityNav } from '@/lib/forge-content';
 
 export function Footer() {
   return (
-    <footer className="bg-card border-t">
-      <div className="container mx-auto max-w-7xl px-4 md:px-6 py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+    <footer className="border-t border-border bg-card">
+      <div className="container mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 md:px-6">
+        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
           <Logo />
-          <p className="text-sm text-foreground/70 text-center md:text-left">
-            © {new Date().getFullYear()} Webara Studio. All rights reserved.
+          <p className="max-w-xl text-sm text-muted-foreground">
+            Webara Forge is a selective hacker house and venture studio in Tema,
+            Ghana. Startups are forged here.
           </p>
-          <div className="flex gap-4">
-            <Link
-              href="/privacy-policy"
-              className="text-sm text-foreground/70 hover:text-foreground"
-              prefetch={false}
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              href="/terms-of-service"
-              className="text-sm text-foreground/70 hover:text-foreground"
-              prefetch={false}
-            >
-              Terms of Service
-            </Link>
-          </div>
         </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {utilityNav.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-sm text-foreground/75 transition-colors hover:text-primary"
+              prefetch={false}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Webara Forge. All rights reserved.
+        </p>
       </div>
     </footer>
   );

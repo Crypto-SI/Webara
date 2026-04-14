@@ -1,106 +1,65 @@
-'use client';
+import Link from 'next/link';
 
-// src/app/page.tsx
-import { MarketingHeader } from '@/components/layout/marketing-header';
-import dynamic from 'next/dynamic';
-import { HeroSection } from '@/components/sections/hero-section';
-import { HowItWorksSection } from '@/components/sections/how-it-works-section';
-import { PortfolioSection } from '@/components/sections/portfolio-section';
-import { AboutSection } from '@/components/sections/about-section';
-import { Footer } from '@/components/layout/footer';
-import { useAnimation } from '@/contexts/animation-context';
+import { Button } from '@/components/ui/button';
+import { ctaLinks } from '@/lib/forge-content';
 
-const TestimonialsSection = dynamic(
-  () =>
-    import('@/components/sections/testimonials-section').then(
-      (mod) => mod.TestimonialsSection
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-        Loading testimonials…
-      </div>
-    ),
-  }
-);
-
-const QuoteSection = dynamic(
-  () =>
-    import('@/components/sections/quote-section').then(
-      (mod) => mod.QuoteSection
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-        Loading quote form…
-      </div>
-    ),
-  }
-);
-
-const IntroAnimation = dynamic(
-  () =>
-    import('@/components/intro-animation').then((mod) => mod.IntroAnimation),
-  { ssr: false }
-);
-
-// NOTE: metadata export removed because this is now a client component.
-// Move SEO metadata into a server layout (e.g. src/app/(marketing)/layout.tsx) instead.
-
-// JSON-LD Organization schema for enhanced rich results
-const organizationJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'Webara Studio',
-  url: 'https://webarastudio.com',
-  logo: 'https://webarastudio.com/webaralogo.webp',
-  contactPoint: [
-    {
-      '@type': 'ContactPoint',
-      contactType: 'customer support',
-      email: 'info@webarastudio.com',
-      availableLanguage: ['en'],
-    },
-  ],
-};
+const highlights = [
+  '14-week live-in cohort model with validation rounds, sprint cycles, and demo week.',
+  'Selective admissions designed for ambitious builders, operators, and founders.',
+  'Public proof-of-work archive across cohorts, projects, members, and media.',
+];
 
 export default function Home() {
-  const { isAnimationVisible } = useAnimation();
   return (
     <>
-      {/* Organization JSON-LD for rich results */}
-      <script
-        type="application/ld+json"
-        suppressHydrationWarning
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-      />
-      {isAnimationVisible && <IntroAnimation />}
-      <div className="page-shell">
-        <MarketingHeader />
-        <main className="page-main">
-          <section className="section-px">
-            <HeroSection />
-          </section>
-          <section className="section-px">
-            <HowItWorksSection />
-          </section>
-          <section className="section-px" id="portfolio">
-            <PortfolioSection />
-          </section>
-          <section className="section-px">
-            <AboutSection />
-          </section>
-          <section className="section-px">
-            <TestimonialsSection />
-          </section>
-          <section className="section-px" id="contact">
-            <QuoteSection />
-          </section>
-        </main>
-        <Footer />
-      </div>
+        <section className="border-b border-border">
+          <div className="container mx-auto max-w-7xl space-y-8 px-4 py-20 md:px-6 md:py-28">
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">
+              Webara Forge · Tema, Ghana
+            </p>
+            <h1 className="max-w-4xl text-5xl font-bold tracking-tight md:text-6xl">
+              Startups are forged here.
+            </h1>
+            <p className="max-w-3xl text-lg leading-8 text-muted-foreground">
+              A selective hacker house and venture studio where small teams build
+              under pressure, validate quickly, and turn signal into enduring
+              companies.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild size="lg">
+                <Link href="/apply">Apply</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link href="/projects">Explore Projects</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section className="container mx-auto max-w-7xl px-4 py-16 md:px-6">
+          <div className="grid gap-4 md:grid-cols-3">
+            {highlights.map((item) => (
+              <article key={item} className="rounded-lg border border-border bg-card p-6 text-sm leading-6 text-foreground/90">
+                {item}
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="container mx-auto max-w-7xl space-y-6 px-4 pb-20 md:px-6">
+          <h2 className="text-2xl font-semibold">Key journeys</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {ctaLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-lg border border-border bg-card p-6 text-lg font-medium transition-colors hover:border-primary hover:text-primary"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </section>
     </>
   );
 }
