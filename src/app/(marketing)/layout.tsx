@@ -1,6 +1,7 @@
 // src/app/(marketing)/layout.tsx
 import type { Metadata } from 'next';
 import React from 'react';
+import { NewsletterPopup } from '@/components/newsletter-popup';
 
 const siteUrl = 'https://webarastudio.com';
 
@@ -101,6 +102,7 @@ export default function MarketingLayout({
     <>
       <StructuredData />
       {children}
+      <NewsletterPopup />
     </>
   );
 }
