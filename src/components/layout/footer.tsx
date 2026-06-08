@@ -13,6 +13,15 @@ export function Footer() {
           </p>
           <div className="flex gap-4">
             <Link
+              href="https://research.webarastudio.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-foreground/70 hover:text-foreground"
+              prefetch={false}
+            >
+              Research
+            </Link>
+            <Link
               href="/privacy-policy"
               className="text-sm text-foreground/70 hover:text-foreground"
               prefetch={false}

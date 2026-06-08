@@ -7,6 +7,7 @@ import { HeroSection } from '@/components/sections/hero-section';
 import { HowItWorksSection } from '@/components/sections/how-it-works-section';
 import { PortfolioSection } from '@/components/sections/portfolio-section';
 import { AboutSection } from '@/components/sections/about-section';
+import { ResearchSection } from '@/components/sections/research-section';
 import { Footer } from '@/components/layout/footer';
 import { useAnimation } from '@/contexts/animation-context';
 
@@ -94,6 +95,9 @@ export default function Home() {
           </section>
           <section className="section-px">
             <TestimonialsSection />
+          </section>
+          <section className="section-px">
+            <ResearchSection />
           </section>
           <section className="section-px" id="contact">
             <QuoteSection />
